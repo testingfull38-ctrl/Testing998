@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana Devnet Transaction Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }
+        h1 { color: #333; }
+        input { padding: 5px; margin: 5px 0; }
+        button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        #status { color: #d9534f; font-weight: bold; }
+    </style>
+    <!-- Load Solana Web3.js from CDN -->
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+</head>
+<body>
+    <h1>Solana Devnet Transaction Test</h1>
+    <p>Connect your Phantom wallet to proceed.</p>
+    <button onclick="connectWallet()">Connect Wallet</button>
+    <p>Recipient Address: <input type="text" id="recipient" placeholder="Enter recipient address" size="50"></p>
+    <p>Amount (in SOL): <input type="number" id="amount" step="0.001" min="0.001" value="0.001"></p>
+    <button onclick="sendTransaction()" id="sendBtn" disabled>Send Transaction</button>
+    <p id="status">Status: Ready</p>
+
+    <script>
+        const { Connection, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL, sendAndConfirmTransaction } = SolanaWeb3;
+
+        // Replace with your Alchemy Devnet endpoint
+        const RPC_URL = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
+        const connection = new Connection(RPC_URL, 'confirmed');
+
+        let wallet = null;
+
+        // Connect to Phantom Wallet
+        async function connectWallet() {
+            if ("solana" in window) {
+                try {
+                    wallet = window.solana;
+                    await wallet.connect();
+                    document.getElementById('status').textContent = `Status: Connected to ${wallet.publicKey.toString()}`;
+                    document.getElementById('sendBtn').disabled = false;
+                } catch (error) {
+                    document.getElementById('status').textContent = `Status: Error connecting - ${error.message}`;
+                }
+            } else {
+                document.getElementById('status').textContent = 'Status: Please install Phantom Wallet.';
+            }
+        }
+
+        // Request airdrop for testing
+        async function requestAirdrop(publicKey) {
+            const airdropSignature = await connection.requestAirdrop(
+                publicKey,
+                2 * LAMPORTS_PER_SOL // 2 SOL for testing
+            );
+            await connection.confirmTransaction(airdropSignature);
+            console.log('Airdrop successful:', airdropSignature);
+            return airdropSignature;
+        }
+
+        // Send transaction
+        async function sendTransaction() {
+            const recipientAddress = document.getElementById('recipient').value;
+            const amount = parseFloat(document.getElementById('amount').value) * LAMPORTS_PER_SOL;
+            const statusElement = document.getElementById('status');
+
+            if (!wallet || !recipientAddress || !amount || amount <= 0) {
+                statusElement.textContent = 'Status: Please connect wallet, and enter a valid recipient address and amount.';
+                return;
+            }
+
+            try {
+                statusElement.textContent = 'Status: Preparing transaction...';
+
+                // Validate recipient address
+                const recipientPubkey = new PublicKey(recipientAddress);
+
+                // Create transaction
+                const transaction = new Transaction().add(
+                    SystemProgram.transfer({
+                        fromPubkey: wallet.publicKey,
+                        toPubkey: recipientPubkey,
+                        lamports: amount,
+                    })
+                );
+
+                // Fetch recent blockhash
+                const { blockhash } = await connection.getRecentBlockhash();
+                transaction.recentBlockhash = blockhash;
+                transaction.feePayer = wallet.publicKey;
+
+                // Sign transaction with Phantom
+                const signedTransaction = await wallet.signTransaction(transaction);
+                const signature = await sendAndConfirmTransaction(connection, signedTransaction, []);
+
+                statusElement.textContent = `Status: Transaction successful! Signature: ${signature}`;
+                console.log('Transaction signature:', signature);
+
+                // Open in Solana Explorer
+                window.open(`https://explorer.solana.com/tx/${signature}?cluster=devnet`, '_blank');
+            } catch (error) {
+                statusElement.textContent = `Status: Error - ${error.message}`;
+                console.error('Transaction failed:', error);
+            }
+        }
+
+        // Initial check for wallet
+        if ("solana" in window) {
+            wallet = window.solana;
+        } else {
+            document.getElementById('status').textContent = 'Status: Please install Phantom Wallet.';
+        }
+    </script>
+</body>
+</html>
