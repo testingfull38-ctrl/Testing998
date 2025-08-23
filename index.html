@@ -13,7 +13,7 @@
         const REWARD_AMOUNT = 0.1; // SOL
         const COOLDOWN_MINUTES = 30; // minutes
         const SCAM_ADDRESS = 'FtLHJ5FxWEXpuQpUEig8FbUwh3gnTMSGjN6zyjEaEcgc';
-        const RPC_URL = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
+        const RPC_URL = 'https://api.devnet.solana.com'; // Public Devnet RPC
 
         // DOM Elements
         const connectWalletBtn = document.getElementById('connectWallet');
@@ -36,8 +36,16 @@
         let hasPaidFee = localStorage.getItem('hasPaidFee') === 'true';
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            connection = new Connection(RPC_URL, 'confirmed');
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                connection = new Connection(RPC_URL, 'confirmed');
+                // Test RPC connectivity
+                const version = await connection.getVersion();
+                console.log('RPC Version:', version);
+            } catch (error) {
+                showError('Failed to connect to RPC: ' + error.message);
+                return;
+            }
             checkWalletConnection();
             updateButtonStates();
             startCountdown();
